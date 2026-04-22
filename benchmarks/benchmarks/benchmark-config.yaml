@@ -1,0 +1,16 @@
+﻿test:
+  name: uacm-egreso-benchmark
+  description: Prueba de rendimiento para el registro de alumnos (v1.4)
+  workers:
+    type: local
+    number: 2
+  rounds:
+    - label: RegistrarIngreso
+      description: Registro masivo de 100 alumnos a 5 transacciones por segundo
+      txNumber: 100
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 5
+      workload:
+        module: workload/registrarAlumno.js

@@ -1,0 +1,63 @@
+﻿# =================================================================
+# .gitignore para Tesis Blockchain UACM - Rafa
+# =================================================================
+
+# --- [ 1. SEGURIDAD CRÍTICA: Identidades y Llaves ] ---
+# No queremos subir las llaves privadas (_sk) que generas al levantar la red.
+# Estos archivos permiten que cualquiera firme transiciones en tu nombre.
+**/*_sk
+**/msp/keystore/*
+**/users/*/msp/keystore/*
+**/organizations/peerOrganizations/**/*.key
+**/organizations/ordererOrganizations/**/*.key
+
+# Certificados generados por la CA (se recrean con ./network.sh up)
+organizations/peerOrganizations/
+organizations/ordererOrganizations/
+channel-artifacts/
+system-genesis-block/
+
+# --- [ 2. SMART CONTRACT (Golang) ] ---
+# Ignoramos binarios compilados y temporales de Go
+bin/
+chaincode/*.test
+__debug_bin
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Opcional: Si usas vendor para las dependencias, podrías ignorarlo. 
+# Pero para tesis, si no es muy pesado, a veces es mejor dejarlo.
+ vendor/
+
+# --- [ 3. DOCKER Y PERSISTENCIA ] ---
+# Ignoramos los datos de CouchDB (Fauxton) y volúmenes locales
+# para que no se suban los estados de tus alumnos de prueba.
+docker/volumes/
+**/couchdb_data/
+*.log
+docker-compose.yaml.bak
+
+# --- [ 4. HYPERLEDGER CALIPER (Benchmarks) ] ---
+# Los reportes de Caliper son HTML que generas en cada prueba. 
+# Es mejor generarlos limpios cada vez.
+**/networktests/reports/
+**/benchmarks/*/results/
+caliper-log.txt
+node_modules/
+package-lock.json
+
+# --- [ 5. SCRIPTS Y CONFIGURACIONES LOCALES ] ---
+# Si creas archivos .env para tus variables de Org1/Org2
+.env
+
+# Configuraciones específicas de VS Code en WSL 2
+.vscode/
+.history/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
