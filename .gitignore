@@ -1,62 +1,85 @@
 ﻿# =================================================================
-# .gitignore para Tesis Blockchain UACM - Rafa
+
+# .gitignore para Tesis Blockchain UACM
+
 # =================================================================
 
 # --- [ 1. SEGURIDAD CRÍTICA: Identidades y Llaves ] ---
-# No queremos subir las llaves privadas (_sk) que generas al levantar la red.
-# Estos archivos permiten que cualquiera firme transiciones en tu nombre.
+
+# Llaves privadas y material criptográfico sensible
+
 **/*_sk
 **/msp/keystore/*
 **/users/*/msp/keystore/*
 **/organizations/peerOrganizations/**/*.key
 **/organizations/ordererOrganizations/**/*.key
 
-# Certificados generados por la CA (se recrean con ./network.sh up)
+# Certificados y archivos criptográficos adicionales
+
+*.pem
+*.crt
+*.cert
+*.key
+*.jks
+
+# Estructuras generadas por Fabric (se recrean)
+
 organizations/peerOrganizations/
 organizations/ordererOrganizations/
 channel-artifacts/
 system-genesis-block/
 
-# --- [ 2. SMART CONTRACT (Golang) ] ---
-# Ignoramos binarios compilados y temporales de Go
+# --- [ 2. DEPENDENCIAS Y BUILD (GOLANG) ] ---
+
+# Binarios y artefactos compilados
+
 bin/
-chaincode/*.test
-__debug_bin
 *.exe
 *.dll
 *.so
 *.dylib
+chaincode/*.test
+__debug_bin
 
-# Opcional: Si usas vendor para las dependencias, podrías ignorarlo. 
-# Pero para tesis, si no es muy pesado, a veces es mejor dejarlo.
- vendor/
+# Dependencias (no subir vendor)
+
+vendor/
+**/vendor/
 
 # --- [ 3. DOCKER Y PERSISTENCIA ] ---
-# Ignoramos los datos de CouchDB (Fauxton) y volúmenes locales
-# para que no se suban los estados de tus alumnos de prueba.
+
 docker/volumes/
 **/couchdb_data/
 *.log
 docker-compose.yaml.bak
 
-# --- [ 4. HYPERLEDGER CALIPER (Benchmarks) ] ---
-# Los reportes de Caliper son HTML que generas en cada prueba. 
-# Es mejor generarlos limpios cada vez.
+# --- [ 4. HYPERLEDGER CALIPER ] ---
+
+# Resultados y reportes de benchmarking
+
 **/networktests/reports/
 **/benchmarks/*/results/
 caliper-log.txt
+
+# Node.js (Caliper)
+
 node_modules/
-package-lock.json
 
-# --- [ 5. SCRIPTS Y CONFIGURACIONES LOCALES ] ---
-# Si creas archivos .env para tus variables de Org1/Org2
+# (Se recomienda NO ignorar package-lock.json para reproducibilidad)
+
+# --- [ 5. VARIABLES Y CONFIGURACIÓN LOCAL ] ---
+
 .env
+.env.*
+*.env
 
-# Configuraciones específicas de VS Code en WSL 2
+# Configuración local de editores
+
 .vscode/
 .history/
 
-# Archivos de sistema
+# --- [ 6. SISTEMA ] ---
+
 .DS_Store
 Thumbs.db
 *.bak
