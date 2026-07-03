@@ -21,7 +21,7 @@ jobs:
     - name: Configurar entorno de Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.20' # Ajusta a la versión exacta de Go instalada en tu workstation
+        go-version: '1.21' # Ajusta a la versión exacta de Go instalada en tu workstation
 
     # 3. Descargar y depurar el árbol de dependencias del módulo oficial de Fabric
     - name: Instalar y verificar dependencias
