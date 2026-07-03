@@ -1,0 +1,43 @@
+﻿name: UACM Blockchain Smart Contract CI
+
+# La pipeline se dispara automáticamente ante cualquier push o pull request a la rama main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-verify:
+    name: Compilación y Verificación Estática (Go)
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Descargar el código fuente desde el repositorio de GitHub al contenedor virtual de CI
+    - name: Descargar código del repositorio
+      uses: actions/checkout@v4
+
+    # 2. Configurar el entorno oficial de Go (fijando la versión de tu entorno de desarrollo)
+    - name: Configurar entorno de Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.20' # Ajusta a la versión exacta de Go instalada en tu workstation
+
+    # 3. Descargar y depurar el árbol de dependencias del módulo oficial de Fabric
+    - name: Instalar y verificar dependencias
+      run: |
+        go mod download
+        go mod tidy
+
+    # 4. Compilación Estática Nv. 1: Garantizar que no existan discrepancias en los Structs
+    - name: Compilar Smart Contract (go build)
+      run: go build -v ./...
+
+    # 5. Verificación de Formato Oficial (Asegurar buenas prácticas de código limpio)
+    - name: Verificar formato del código (go fmt)
+      run: |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Error: Los siguientes archivos no cumplen con el formato oficial de Go:"
+          gofmt -l .
+          exit 1
+        fi
