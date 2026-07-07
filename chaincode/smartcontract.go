@@ -48,7 +48,7 @@ type SmartContract struct {
 
 // validarOrg verifica de forma estricta la identidad del emisor mediante su MSPID
 func (s *SmartContract) validarOrg(ctx contractapi.TransactionContextInterface, orgEsperada string) error {
-	clientMSPID, err := ctx.GetStub().GetClientIdentity().GetMSPID()
+	clientMSPID, err := cid.GetMSPID(ctx.GetStub())
 	if err != nil {
 		return fmt.Errorf("error al obtener MSPID del cliente: %v", err)
 	}
@@ -373,9 +373,9 @@ func (s *SmartContract) ConsultarExpediente(ctx contractapi.TransactionContextIn
 
 // ConsultarHistorial audita los cambios históricos con control de accesos por identidad (CID)
 func (s *SmartContract) ConsultarHistorial(ctx contractapi.TransactionContextInterface, matricula string) ([]string, error) {
-	clientID, err := cid.GetClientID(ctx.GetStub())
+	clientID, err := cid.GetID(ctx.GetStub())
 	if err != nil {
-		return nil, fmt.Errorf("error al verificar credenciales del llamador: %v", err)
+		return nil, fmt.Errorf("error al verificar las credenciales del llamador: %v", err)
 	}
 
 	// Si el llamador no es el estudiante dueño de la matrícula, debe ser un administrador válido
