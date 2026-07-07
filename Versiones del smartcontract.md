@@ -73,6 +73,12 @@ Gobernanza de Estilo de Código: Formateo integral del archivo bajo el estándar
 
 ---
 
+### Versión 3.5
+
+El desarrollo evolutivo del componente on-chain culminó con la liberación de la versión 3.5 del contrato inteligente, la cual consolida las directrices de seguridad digital y robustez arquitectónica del sistema distribuido. Esta revisión no solo unifica la nomenclatura técnica bajo el identificador único de matrícula, sino que introduce mecanismos avanzados de mitigación de riesgos mediante constructores de consultas estructuradas en CouchDB, validaciones de integridad transversales en los hitos intermedios de certificación y titulación, y restricciones de auditoría basadas en la identidad criptográfica del llamador. Asimismo, la versión 3.5 añade resiliencia institucional al incorporar formalmente la capacidad de revocación de títulos, completando el ciclo de vida del expediente digital dentro de un entorno de red totalmente permisionado y auditable.
+
+---
+
 ### Resumen de Trazabilidad de Métodos (Matriz Diseño ↔ Código)
 
 | Proceso Metodológico (Diseño Tesis) | Función en Código (v3.4) | Estado Resultante en Ledger | Organización Emisora |
