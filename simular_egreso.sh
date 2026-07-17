@@ -1,19 +1,19 @@
 #!/bin/bash
 # ================================================================================
 # Proyecto UACM-Blockchain: Simulador Automatizado Concurrente (MED-EC v4.1)
-# Hostname: DESKTOP-9LHUF5R | Prototipo Funcional de Egreso (Fork-Join)
+# Hostname: DESKTOP-9LHUF5R | Prototipo Funcional de Egreso (Privacidad PII Alta)
 # ================================================================================
 set -e
 
-# 1. Control de Matrícula Dinámica y Nombre
-MATRICULA=${1:-"22-001-7777"}
-NOMBRE_ESTUDIANTE=${2:-"Estudiante Concurrente UACM"}
+# 1. Control de Matrícula Dinámica (Único dato identificador autorizado en Ledger)
+MATRICULA=${1:-"22-001-5555"}
 
 echo "================================================================================"
-echo "Iniciando ciclo automatizado MED-EC v4.1 para: $NOMBRE_ESTUDIANTE ($MATRICULA)"
+echo "Iniciando ciclo automatizado MED-EC v4.1 para la matrícula: $MATRICULA"
 echo "================================================================================"
 
-# 2. SIMULACIÓN OFF-CHAIN: Generación de evidencias SHA-256 reales para las compuertas
+# 2. SIMULACIÓN OFF-CHAIN: Generación de evidencias SHA-256 (Cero Datos Personales en Red)
+HASH_INSCR=$(echo -n "${MATRICULA}_FOL-2026-INSCRIPCION" | sha256sum | awk '{print $1}')
 HASH_DOCS=$(echo -n "${MATRICULA}_FOL-2026-DOCS-UACM" | sha256sum | awk '{print $1}')
 HASH_CERT=$(echo -n "${MATRICULA}_FOL-2026-CERTIFICA" | sha256sum | awk '{print $1}')
 HASH_SS_INI=$(echo -n "${MATRICULA}_FOL-2026-SS-INICIO" | sha256sum | awk '{print $1}')
@@ -50,39 +50,36 @@ cd $NETWORK_DIR
 echo "=== [Etapa 1] Fase Inicial en Org1MSP ==="
 cargar_org1
 
-echo "-> CU-01: Ejecutando inscripción inicial..."
-peer chaincode invoke $ORDERER_ARGS $CHANNEL_ARGS $PEERS_ARGS -c "{\"Args\":[\"RegistrarInscripcion\",\"$MATRICULA\",\"$NOMBRE_ESTUDIANTE\"]}"
-echo "Esperando confirmacion en el ledger..."
+echo "-> CU-01: Ejecutando inscripción inicial (Parámetros: Matrícula + HashInscripción)..."
+peer chaincode invoke $ORDERER_ARGS $CHANNEL_ARGS $PEERS_ARGS -c "{\"Args\":[\"RegistrarInscripcion\",\"$MATRICULA\",\"$HASH_INSCR\"]}"
+echo "Esperando confirmacion..."
 sleep 3
 
 echo "-> CU-02: Validando documentación base (Apertura del Fork)..."
 peer chaincode invoke $ORDERER_ARGS $CHANNEL_ARGS $PEERS_ARGS -c "{\"Args\":[\"ValidarDocumentos\",\"$MATRICULA\",\"$HASH_DOCS\"]}"
-echo "Esperando confirmacion en el ledger..."
+echo "Esperando confirmacion..."
 sleep 3
-
 
 echo "=== [Etapa 2] Bifurcación Asíncrona: Certificación Anticipada en Org2MSP ==="
 cargar_org2
 
-echo "-> CU-03: Registrando Certificación Académica (Sin requerir Servicio Social)..."
+echo "-> CU-03: Registrando Certificación Académica..."
 peer chaincode invoke $ORDERER_ARGS $CHANNEL_ARGS $PEERS_ARGS -c "{\"Args\":[\"RegistrarCertificacion\",\"$MATRICULA\",\"$HASH_CERT\"]}"
-echo "Esperando confirmacion en el ledger..."
+echo "Esperando confirmacion..."
 sleep 3
 
-
-echo "=== [Etapa 3] Paralelismo: Procesando Servicio Social en Org1MSP ==="
+echo "=== [Etapa 3] Paralelismo: Procesando Servicio Social en Org1MSP === "
 cargar_org1
 
 echo "-> CU-04: Iniciando Servicio Social del estudiante..."
 peer chaincode invoke $ORDERER_ARGS $CHANNEL_ARGS $PEERS_ARGS -c "{\"Args\":[\"IniciarServicioSocial\",\"$MATRICULA\",\"$HASH_SS_INI\"]}"
-echo "Esperando confirmacion en el ledger..."
+echo "Esperando confirmacion..."
 sleep 3
 
-echo "-> CU-05: Liberando Servicio Social del estudiante..."
+echo "-> CU-05: Liberando Servicio Social..."
 peer chaincode invoke $ORDERER_ARGS $CHANNEL_ARGS $PEERS_ARGS -c "{\"Args\":[\"LiberarServicioSocial\",\"$MATRICULA\",\"$HASH_SS_LIB\"]}"
-echo "Esperando confirmacion en el ledger..."
+echo "Esperando confirmacion..."
 sleep 3
-
 
 echo "=== [Etapa 4] Confluencia (Join) y Cierre Terminal en Org2MSP ==="
 cargar_org2
@@ -92,6 +89,5 @@ peer chaincode invoke $ORDERER_ARGS $CHANNEL_ARGS $PEERS_ARGS -c "{\"Args\":[\"R
 echo "Esperando asentamiento final..."
 sleep 3
 
-
-echo "=== [Etapa 5] Auditoría Completa del Expediente Generado ==="
+echo "=== [Etapa 5] Auditoría Completa del Expediente Anónimo ==="
 peer chaincode query $CHANNEL_ARGS -c "{\"Args\":[\"ConsultarExpediente\",\"$MATRICULA\"]}" | jq '.'
