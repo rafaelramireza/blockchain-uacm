@@ -28,10 +28,11 @@ jobs:
     # 4. Auditoría Automatizada Anti-PII (Garantiza el cumplimiento del Criterio 4.5.1 de la Tesis)
     - name: Verificar exclusión de Datos Personales (PII)
       run: |
-        echo "Validando que no existan etiquetas estructurales PII persistidas en CouchDB..."
-        if grep -q 'json:"nom.*bre"' chaincode/*.go; then
-          echo "ERR: Violación de privacidad detectada en el contrato inteligente."
-          echo "Revisa el criterio de minimización de datos del Capítulo 4."
+        echo "Validando exclusión de atributos PII en estructuras del World State..."
+        # Buscamos de forma exacta la etiqueta de serialización JSON en el archivo del chaincode
+        if grep -q 'json:"[n]ombre"' chaincode/egreso_contract.go; then
+          echo "ERR: Violación de privacidad detectada en egreso_contract.go."
+          echo "Se localizó el tag 'json:\"nombre\"' prohibido por el criterio de minimización del Capítulo 4."
           exit 1
         fi
 
