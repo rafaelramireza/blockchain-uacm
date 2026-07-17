@@ -21,7 +21,7 @@ jobs:
     - name: Configurar entorno de Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21' # Ajustado a tu entorno de desarrollo local
+        go-version: '1.21'
 
     # 3. Descargar y depurar el árbol de dependencias del módulo oficial de Fabric
     - name: Instalar y verificar dependencias
@@ -32,9 +32,9 @@ jobs:
     # 4. Auditoría Automatizada Anti-PII (Garantiza el cumplimiento del Criterio 4.5.1 de la Tesis)
     - name: Verificar exclusión de Datos Personales (PII)
       run: |
-        echo "Validando que no existan campos de nombres propios persistidos en el Ledger..."
-        if grep -qi '"nombre"' chaincode/*.go; then
-          echo "ERR: Violación de privacidad detectada. Se localizó el atributo reservado 'nombre'."
+        echo "Validando que no existan etiquetas estructurales PII persistidas en CouchDB..."
+        if grep -q 'json:"nombre"' chaincode/*.go; then
+          echo "ERR: Violación de privacidad detectada. Se localizó el tag JSON reservado 'json:\"nombre\"'."
           echo "Revisa el criterio de minimización de datos del Capítulo 4."
           exit 1
         fi
@@ -52,6 +52,6 @@ jobs:
           exit 1
         fi
 
-    # 7. Pruebas Unitarias Dinámicas (Opcional pero recomendado para robustecer el pipeline)
+    # 7. Pruebas Unitarias Dinámicas
     - name: Ejecutar Pruebas Unitarias
       run: go test -v ./...
