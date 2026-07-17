@@ -15,7 +15,7 @@ echo "=== [2/5] Levantando topologia de consorcio con CouchDB y CAs ==="
 ./network.sh up createChannel -c canal-uacm -s couchdb -ca
 
 echo "=== [3/5] Desplegando Smart Contract unificado (Go v4.1 - Secuencia 3) ==="
-./network.sh deployCC -ccn uacm-contract -ccp /home/rafa/hyperledger/uacm-egreso -ccv 4.1 -ccs 3 -ccl go -c canal-uacm
+./network.sh deployCC -ccn uacm-contract -ccp /home/rafa/hyperledger/uacm-egreso -ccv 4.1 -ccs 1 -ccl go -c canal-uacm
 
 echo "=== [4/5] Extrayendo llaves privadas dinamicas (_sk) de los Administradores ==="
 KEY_ORG1=$(ls ~/hyperledger/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/)
