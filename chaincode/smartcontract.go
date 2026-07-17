@@ -106,7 +106,7 @@ func (s *SmartContract) ValidarDocumentos(ctx contractapi.TransactionContextInte
 	}
 
 	expediente.EstadoGlobal = EstadoGlobalDocValidado
-	
+
 	txTimestamp, _ := ctx.GetStub().GetTxTimestamp()
 	expediente.Evidencias["VALIDACION_DOC"] = HashEvidencia{
 		Hash:      hashDocumentos,
@@ -134,7 +134,7 @@ func (s *SmartContract) IniciarServicioSocial(ctx contractapi.TransactionContext
 	}
 
 	expediente.EstadoServicioSocial = EstadoSSEnCurso
-	
+
 	txTimestamp, _ := ctx.GetStub().GetTxTimestamp()
 	expediente.Evidencias["INICIO_SS"] = HashEvidencia{
 		Hash:      hashAutorizacion,
@@ -162,7 +162,7 @@ func (s *SmartContract) LiberarServicioSocial(ctx contractapi.TransactionContext
 	}
 
 	expediente.EstadoServicioSocial = EstadoSSLiberado
-	
+
 	txTimestamp, _ := ctx.GetStub().GetTxTimestamp()
 	expediente.Evidencias["LIBERACION_SS"] = HashEvidencia{
 		Hash:      hashLiberacion,
@@ -190,7 +190,7 @@ func (s *SmartContract) RegistrarCertificacion(ctx contractapi.TransactionContex
 	}
 
 	expediente.EstadoCertificacion = EstadoCertCertificado
-	
+
 	txTimestamp, _ := ctx.GetStub().GetTxTimestamp()
 	expediente.Evidencias["CERTIFICACION"] = HashEvidencia{
 		Hash:      hashCertificado,
@@ -209,7 +209,7 @@ func (s *SmartContract) RegistrarTitulacion(ctx contractapi.TransactionContextIn
 	}
 
 	expediente, err := s.ConsultarExpediente(ctx, id)
-	
+
 	if err != nil && len(id) >= 5 && id[0:5] == "TEST-" {
 		expediente = &Expediente{
 			ID:                   id,
@@ -244,7 +244,7 @@ func (s *SmartContract) RegistrarTitulacion(ctx contractapi.TransactionContextIn
 	}
 
 	expediente.EstadoGlobal = EstadoGlobalTitulado
-	
+
 	txTimestamp, _ := ctx.GetStub().GetTxTimestamp()
 	expediente.Evidencias["TITULACION"] = HashEvidencia{
 		Hash:      hashActa,
