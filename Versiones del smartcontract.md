@@ -79,6 +79,32 @@ El desarrollo evolutivo del componente on-chain culminó con la liberación de l
 
 ---
 
+### Versión 4.0
+
+Agregado (Feat)
+Arquitectura de Consorcio Multiorganización: Transición de un esquema de nodo único a una red permisionada distribuida real con dos organizaciones (Org1MSP para administración y Org2MSP para control escolar).
+
+Control de Acceso Criptográfico Integrado: Implementación de la función interna validarOrg utilizando el módulo cid (Client Identity) de Hyperledger Fabric. Se restringe de forma estricta la ejecución de funciones específicas basándose en el certificado X.509 firmado por la autoridad certificadora de cada MSP.
+
+Estructuración del Ledger en CouchDB: Modelado de las estructuras del World State (Expediente y el mapa asociativo HashEvidencia) para permitir consultas de auditoría complejas sobre metadatos e históricos en formato JSON.
+
+⚠️ Limitaciones Identificadas (Heredadas de la FSM Inicial)
+Acoplamiento de Subprocesos: El diseño original forzaba la secuencia lineal estricta del trámite de egreso, requiriendo que la función de certificación académica validara el estado del Servicio Social como prerequisito directo, bloqueando flujos alternativos viables para la administración universitaria.
+
+---
+
+### Versión 4.1
+
+Agregado (Feat)
+Concurrencia Fork-Join Pura (MED-EC v4.1): Reestructuración completa de las reglas de transición en las funciones IniciarServicioSocial y RegistrarCertificacion. Se eliminaron las precondiciones cruzadas, unificando la regla base: ambos subprocesos operan de forma asíncrona y paralela exigiendo únicamente el estado global DOC_VALIDADO.Compuerta Lógica Terminal (Join): El método RegistrarTitulacion actúa como barrera de sincronización, validando la confluencia exitosa de las firmas de evidencias de ambos caminos (VALIDACION_DOC, CERTIFICACION, LIBERACION_SS) antes de conmutar al estado terminal TITULADO.🐛 Corregido (Fix)Alineación de Enums del World State: Ajuste de las claves del mapa de evidencias en la lógica de control del escenario Caliper (RegistrarTitulacion), sustituyendo las cadenas largas por los nombres reales persistidos en CouchDB ("LIBERACION_SS" y "CERTIFICACION").Error de Compilación en Tipado de Estructura: Corrección del error de sintaxis en LiberarServicioSocial donde se invocaba la variable inexistente StatusServicioSocial, homogeneizándola con el campo estructurado EstadoServicioSocial.Composite Literals de Go: Inyección de comas faltantes , al cierre de la asignación del objeto Expediente dentro de RegistrarInscripcion.🧪 Casos de Verificación Experimental (WSL / CouchDB)Se registraron y validaron los dos flujos ortogonales de la FSM institucional incrementando el ciclo de vida de la red a Secuencia: 3:Caso de Prueba 01 (Camino A - Estudiante 22-001-8888): Flujo tradicional. Validación Doc $\rightarrow$ Servicio Social (Inicio/Liberación) $\rightarrow$ Certificación Académica $\rightarrow$ Titulación.Caso de Prueba 02 (Camino B - Estudiante 22-001-9999): Flujo inverso concurrente. Validación Doc $\rightarrow$ Certificación Académica $\rightarrow$ Servicio Social (Inicio/Liberación) $\rightarrow$ Titulación.Identificadores de Transacción Certificados (TxID - Caso de Prueba 02)JSON{
+  "VALIDACION_DOC": "9a1396434239a1db66ce6d0ca5afa386952fc9300ed7c3d35907fbde9b0e5834",
+  "CERTIFICACION": "b484281ca9b61caae42dba7e3f446ca228e1331958e4b3c094c0b21f684e3ae2",
+  "INICIO_SS": "44d6f301407b4cf6c1b17fa129fafa419255e449c5c150173054b1bb7210d7e1",
+  "LIBERACION_SS": "d842bd29d0e32e0043007fbe7d5f684caaea514ba99f4ff770a9dfa47b1f988d",
+  "TITULACION": "757dae4e29ce4e3033e342e5b1e5c58ababc6385c59deb838b900e5752da0d9d"
+}
+---
+
 ### Resumen de Trazabilidad de Métodos (Matriz Diseño ↔ Código)
 
 | Proceso Metodológico (Diseño Tesis) | Función en Código (v3.4) | Estado Resultante en Ledger | Organización Emisora |
