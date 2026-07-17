@@ -33,7 +33,7 @@ jobs:
     - name: Verificar exclusión de Datos Personales (PII)
       run: |
         echo "Validando que no existan etiquetas estructurales PII persistidas en CouchDB..."
-        if grep -q 'json:"nom' 'bre"' chaincode/*.go; then
+        if grep -q 'json:"nom.*bre"' chaincode/*.go; then
           echo "ERR: Violación de privacidad detectada en el contrato inteligente."
           echo "Revisa el criterio de minimización de datos del Capítulo 4."
           exit 1
