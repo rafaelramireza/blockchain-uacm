@@ -120,3 +120,19 @@ func obtenerTimestamp(
 
 	return t.Format(time.RFC3339), nil
 }
+
+func agregarEvidencia(
+	expediente *Expediente,
+	nombre string,
+	hash string,
+	txID string,
+	timestamp string,
+	emisor string,
+) {
+	expediente.Evidencias[nombre] = &HashEvidencia{
+		Hash:      hash,
+		Timestamp: timestamp,
+		Emisor:    emisor,
+		TxID:      txID,
+	}
+}
