@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
@@ -85,4 +87,36 @@ func (s *SmartContract) guardarExpediente(
 	}
 
 	return ctx.GetStub().PutState(clave, datos)
+}
+
+// obtenerMSP devuelve el MSP del invocador de la transacción.
+func obtenerMSP(
+	ctx contractapi.TransactionContextInterface,
+) (string, error) {
+
+	return cid.GetMSPID(ctx.GetStub())
+}
+
+// obtenerTxID devuelve el identificador único de la transacción.
+func obtenerTxID(
+	ctx contractapi.TransactionContextInterface,
+) string {
+
+	return ctx.GetStub().GetTxID()
+}
+
+// obtenerTimestamp devuelve el timestamp oficial de la transacción
+// en formato RFC3339.
+func obtenerTimestamp(
+	ctx contractapi.TransactionContextInterface,
+) (string, error) {
+
+	ts, err := ctx.GetStub().GetTxTimestamp()
+	if err != nil {
+		return "", err
+	}
+
+	t := time.Unix(ts.Seconds, int64(ts.Nanos)).UTC()
+
+	return t.Format(time.RFC3339), nil
 }
