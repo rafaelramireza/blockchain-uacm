@@ -1,0 +1,8 @@
+﻿# Ejecutable generado por go build
+chaincode
+
+# Binarios de pruebas
+*.test
+
+# Cobertura
+*.out
