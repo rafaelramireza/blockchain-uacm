@@ -2,9 +2,9 @@ package main
 
 import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 
-// ConfirmarEgreso registra la confirmación del egreso del expediente
-// y realiza la transición de DOC_VALIDADO a EGRESADO.
-func (s *SmartContract) ConfirmarEgreso(
+// ValidarDocumentos registra la validación documental del expediente
+// y realiza la transición de INSCRITO a DOC_VALIDADO.
+func (s *SmartContract) ValidarDocumentos(
 	ctx contractapi.TransactionContextInterface,
 	id string,
 	hash string,
@@ -26,7 +26,7 @@ func (s *SmartContract) ConfirmarEgreso(
 	}
 
 	// Validar estado actual
-	if expediente.EstadoActual != EstadoDocValidado {
+	if expediente.EstadoActual != EstadoInscrito {
 		return ErrEstadoInvalido
 	}
 
@@ -36,7 +36,7 @@ func (s *SmartContract) ConfirmarEgreso(
 		return err
 	}
 
-	if msp != OrgCertificacion {
+	if msp != OrgRegistro {
 		return ErrMSPNoAutorizado
 	}
 
@@ -51,7 +51,7 @@ func (s *SmartContract) ConfirmarEgreso(
 	// Registrar evidencia
 	agregarEvidencia(
 		expediente,
-		EvEgresoConfirmado,
+		EvValidacionDocumental,
 		hash,
 		txID,
 		timestamp,
@@ -59,7 +59,7 @@ func (s *SmartContract) ConfirmarEgreso(
 	)
 
 	// Cambiar estado
-	expediente.EstadoActual = EstadoEgresado
+	expediente.EstadoActual = EstadoDocValidado
 
 	// Persistir cambios
 	return s.guardarExpediente(ctx, expediente)

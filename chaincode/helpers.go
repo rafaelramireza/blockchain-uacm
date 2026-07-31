@@ -121,6 +121,8 @@ func obtenerTimestamp(
 	return t.Format(time.RFC3339), nil
 }
 
+// agregarEvidencia registra una nueva evidencia criptográfica
+// dentro del expediente.
 func agregarEvidencia(
 	expediente *Expediente,
 	nombre string,
@@ -129,10 +131,23 @@ func agregarEvidencia(
 	timestamp string,
 	emisor string,
 ) {
+
+	if expediente.Evidencias == nil {
+		expediente.Evidencias = make(map[string]*HashEvidencia)
+	}
+
 	expediente.Evidencias[nombre] = &HashEvidencia{
 		Hash:      hash,
 		Timestamp: timestamp,
 		Emisor:    emisor,
 		TxID:      txID,
 	}
+}
+
+// cambiarEstado actualiza el estado actual del expediente.
+func cambiarEstado(
+	expediente *Expediente,
+	nuevoEstado string,
+) {
+	expediente.EstadoActual = nuevoEstado
 }

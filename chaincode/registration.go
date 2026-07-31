@@ -61,21 +61,27 @@ func (s *SmartContract) RegistrarInscripcion(
 		return err
 	}
 
-	evidencia := &HashEvidencia{
-		Hash:      hash,
-		TxID:      txID,
-		Timestamp: timestamp,
-		Emisor:    msp,
-	}
-
 	expediente := &Expediente{
 		DocType:      TipoActivoExpediente,
 		ID:           id,
 		EstadoActual: EstadoInscrito,
-		Evidencias: map[string]*HashEvidencia{
-			EvidenciaInscripcion: evidencia,
-		},
+		Evidencias:   make(map[string]*HashEvidencia),
 	}
 
+	agregarEvidencia(
+		expediente,
+		EvInscripcion,
+		hash,
+		txID,
+		timestamp,
+		msp,
+	)
+
+	cambiarEstado(
+		expediente,
+		EstadoInscrito,
+	)
+
 	return s.guardarExpediente(ctx, expediente)
+
 }
