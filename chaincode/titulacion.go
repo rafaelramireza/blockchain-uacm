@@ -54,8 +54,8 @@ func (s *SmartContract) RegistrarTitulacion(
 	}
 
 	if _, ok := expediente.Evidencias[EvServicioSocialLiberado]; !ok {
-    return ErrServicioSocialPendiente
-}
+		return ErrServicioSocialPendiente
+	}
 
 	// Registrar evidencia
 	agregarEvidencia(
