@@ -34,9 +34,13 @@ jobs:
 
       - name: Verificar formato
         run: |
-          if [ -n "$(gofmt -l .)" ]; then
-            echo "Archivos sin formato:"
-            gofmt -l .
+          FILES=$(find . \
+            -path "./vendor" -prune -o \
+            -name "*.go" -print | xargs gofmt -l)
+      
+          if [ -n "$FILES" ]; then
+            echo "Los siguientes archivos requieren gofmt:"
+            echo "$FILES"
             exit 1
           fi
 
