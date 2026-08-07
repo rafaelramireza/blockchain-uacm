@@ -62,10 +62,10 @@ func (s *SmartContract) RegistrarInscripcion(
 	}
 
 	expediente := &Expediente{
-		DocType:      TipoActivoExpediente,
-		ID:           id,
-		EstadoActual: EstadoInscrito,
-		Evidencias:   make(map[string]*HashEvidencia),
+		DocType:        TipoActivoExpediente,
+		ID:             id,
+		EstadoActual:   EstadoInscrito,
+		Evidencias:     make(map[string]*HashEvidencia),
 	}
 
 	agregarEvidencia(

@@ -1,0 +1,195 @@
+=== [1/5] Limpiando contenedores, volumenes y estados previos ===
+[0;34mUsing docker and docker-compose[0m
+[0;34mStopping network[0m
+[0;34mRemoving remaining containers[0m
+[0;34mRemoving generated chaincode docker images[0m
+=== [2/5] Levantando topologia de consorcio con CouchDB y CAs ===
+[0;34mUsing docker and docker-compose[0m
+[0;34mCreating channel 'canal-uacm'.[0m
+[0;34mIf network is not up, starting nodes with CLI timeout of '5' tries and CLI delay of '3' seconds and using database 'couchdb with crypto from 'Certificate Authorities'[0m
+[0;34mBringing up network[0m
+[0;34mLOCAL_VERSION=v2.5.15[0m
+[0;34mDOCKER_IMAGE_VERSION=v2.5.15[0m
+[0;34mCA_LOCAL_VERSION=v1.5.17[0m
+[0;34mCA_DOCKER_IMAGE_VERSION=v1.5.17[0m
+[0;34mGenerating certificates using Fabric CA[0m
+ Network fabric_test Creating 
+ Network fabric_test Created 
+ Container ca_org2 Creating 
+ Container ca_orderer Creating 
+ Container ca_org1 Creating 
+ Container ca_orderer Created 
+ Container ca_org1 Created 
+ Container ca_org2 Created 
+ Container ca_org1 Starting 
+ Container ca_org2 Starting 
+ Container ca_orderer Starting 
+ Container ca_orderer Started 
+ Container ca_org2 Started 
+ Container ca_org1 Started 
+[0;34mCreating Org1 Identities[0m
+[0;34mEnrolling the CA admin[0m
+[0;34mRegistering peer0[0m
+Password: peer0pw
+[0;34mRegistering user[0m
+Password: user1pw
+[0;34mRegistering the org admin[0m
+Password: org1adminpw
+[0;34mGenerating the peer0 msp[0m
+[0;34mGenerating the peer0-tls certificates, use --csr.hosts to specify Subject Alternative Names[0m
+[0;34mGenerating the user msp[0m
+[0;34mGenerating the org admin msp[0m
+[0;34mCreating Org2 Identities[0m
+[0;34mEnrolling the CA admin[0m
+[0;34mRegistering peer0[0m
+Password: peer0pw
+[0;34mRegistering user[0m
+Password: user1pw
+[0;34mRegistering the org admin[0m
+Password: org2adminpw
+[0;34mGenerating the peer0 msp[0m
+[0;34mGenerating the peer0-tls certificates, use --csr.hosts to specify Subject Alternative Names[0m
+[0;34mGenerating the user msp[0m
+[0;34mGenerating the org admin msp[0m
+[0;34mCreating Orderer Org Identities[0m
+[0;34mEnrolling the CA admin[0m
+[0;34mRegistering orderer[0m
+Password: ordererpw
+[0;34mGenerating the orderer MSP[0m
+[0;34mGenerating the orderer TLS certificates, use --csr.hosts to specify Subject Alternative Names[0m
+[0;34mRegistering orderer2[0m
+Password: orderer2pw
+[0;34mGenerating the orderer2 MSP[0m
+[0;34mGenerating the orderer2 TLS certificates, use --csr.hosts to specify Subject Alternative Names[0m
+[0;34mRegistering orderer3[0m
+Password: orderer3pw
+[0;34mGenerating the orderer3 MSP[0m
+[0;34mGenerating the orderer3 TLS certificates, use --csr.hosts to specify Subject Alternative Names[0m
+[0;34mRegistering orderer4[0m
+Password: orderer4pw
+[0;34mGenerating the orderer4 MSP[0m
+[0;34mGenerating the orderer4 TLS certificates, use --csr.hosts to specify Subject Alternative Names[0m
+[0;34mRegistering the orderer admin[0m
+Password: ordererAdminpw
+[0;34mGenerating the admin msp[0m
+[0;34mGenerating CCP files for Org1 and Org2[0m
+ Volume compose_orderer.example.com Creating 
+ Volume compose_orderer.example.com Created 
+ Volume compose_peer0.org1.example.com Creating 
+ Volume compose_peer0.org1.example.com Created 
+ Volume compose_peer0.org2.example.com Creating 
+ Volume compose_peer0.org2.example.com Created 
+time="2026-08-06T09:33:32-06:00" level=warning msg="Found orphan containers (ca_org1, ca_org2, ca_orderer) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container couchdb0 Creating 
+ Container orderer.example.com Creating 
+ Container couchdb1 Creating 
+ Container couchdb1 Created 
+ Container peer0.org2.example.com Creating 
+ Container couchdb0 Created 
+ Container peer0.org1.example.com Creating 
+ Container orderer.example.com Created 
+ Container peer0.org2.example.com Created 
+ Container peer0.org1.example.com Created 
+ Container couchdb0 Starting 
+ Container couchdb1 Starting 
+ Container orderer.example.com Starting 
+ Container couchdb0 Started 
+ Container peer0.org1.example.com Starting 
+ Container couchdb1 Started 
+ Container peer0.org2.example.com Starting 
+ Container orderer.example.com Started 
+ Container peer0.org1.example.com Started 
+ Container peer0.org2.example.com Started 
+CONTAINER ID   IMAGE                               COMMAND                  CREATED         STATUS                  PORTS                                                                                                                                   NAMES
+5d5a301e1c52   hyperledger/fabric-peer:latest      "peer node start"        1 second ago    Up Less than a second   0.0.0.0:7051->7051/tcp, [::]:7051->7051/tcp, 0.0.0.0:9444->9444/tcp, [::]:9444->9444/tcp                                                peer0.org1.example.com
+fd6e5d32665c   hyperledger/fabric-peer:latest      "peer node start"        1 second ago    Up Less than a second   0.0.0.0:9051->9051/tcp, [::]:9051->9051/tcp, 0.0.0.0:9445->9445/tcp, [::]:9445->9445/tcp                                                peer0.org2.example.com
+c0af7a7345b4   couchdb:3.4.2                       "tini -- /docker-ent…"   1 second ago    Up Less than a second   0.0.0.0:5984->5984/tcp, [::]:5984->5984/tcp                                                                                             couchdb0
+a3d028600786   couchdb:3.4.2                       "tini -- /docker-ent…"   1 second ago    Up Less than a second   0.0.0.0:7984->5984/tcp, [::]:7984->5984/tcp                                                                                             couchdb1
+763b66ee914b   hyperledger/fabric-orderer:latest   "orderer"                1 second ago    Up Less than a second   0.0.0.0:7050->7050/tcp, [::]:7050->7050/tcp, 0.0.0.0:7053->7053/tcp, [::]:7053->7053/tcp, 0.0.0.0:9443->9443/tcp, [::]:9443->9443/tcp   orderer.example.com
+dc3f046b905b   hyperledger/fabric-ca:latest        "sh -c 'fabric-ca-se…"   8 seconds ago   Up 7 seconds            0.0.0.0:7054->7054/tcp, [::]:7054->7054/tcp, 0.0.0.0:17054->17054/tcp, [::]:17054->17054/tcp                                            ca_org1
+392cbffa9dba   hyperledger/fabric-ca:latest        "sh -c 'fabric-ca-se…"   8 seconds ago   Up 7 seconds            0.0.0.0:8054->8054/tcp, [::]:8054->8054/tcp, 0.0.0.0:18054->18054/tcp, [::]:18054->18054/tcp                                            ca_org2
+7dfd962dbe0d   hyperledger/fabric-ca:latest        "sh -c 'fabric-ca-se…"   8 seconds ago   Up 7 seconds            0.0.0.0:9054->9054/tcp, [::]:9054->9054/tcp, 0.0.0.0:19054->19054/tcp, [::]:19054->19054/tcp                                            ca_orderer
+f3dd4943f799   fa9dfe768253                        "/bin/sh -c '#(nop) …"   5 days ago      Created                                                                                                                                                         distracted_shamir
+4984addd7f22   c57169b46335                        "/bin/sh -c '#(nop) …"   5 days ago      Created                                                                                                                                                         cool_mayer
+537c29137b17   61c480d88e5c                        "/bin/sh -c '#(nop) …"   5 days ago      Created                                                                                                                                                         gallant_kapitsa
+0ab58cf0ff4c   9576e16251fb                        "/bin/sh -c '#(nop) …"   5 days ago      Created                                                                                                                                                         trusting_easley
+7c497ef801bc   a3b63ab0d4a0                        "/bin/sh -c '#(nop) …"   6 days ago      Created                                                                                                                                                         xenodochial_knuth
+90fd84f8cfc4   cd6eb257ddf8                        "/bin/sh -c '#(nop) …"   6 days ago      Created                                                                                                                                                         agitated_perlman
+3006085eec43   7246f1768e8e                        "/bin/sh -c '#(nop) …"   6 days ago      Created                                                                                                                                                         friendly_jackson
+7ceb766c3930   e4817dd3bb4c                        "/bin/sh -c '#(nop) …"   6 days ago      Created                                                                                                                                                         nice_cohen
+[0;34mUsing docker and docker-compose[0m
+[0;34mGenerating channel genesis block 'canal-uacm.block'[0m
+[0;34mUsing organization 1[0m
+/home/rafa/hyperledger/fabric-samples/test-network/../bin/configtxgen
+[0;34mCreating channel canal-uacm[0m
+[0;34mAdding orderers[0m
+Status: 201
+{
+	"name": "canal-uacm",
+	"url": "/participation/v1/channels/canal-uacm",
+	"consensusRelation": "consenter",
+	"status": "active",
+	"height": 1
+}
+
+[0;32mChannel 'canal-uacm' created[0m
+[0;34mJoining org1 peer to the channel...[0m
+[0;34mUsing organization 1[0m
+[34m2026-08-06 09:33:40.183 CST 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-08-06 09:33:40.513 CST 0002 INFO[0m [channelCmd] [34;1mexecuteJoin[0m -> Successfully submitted proposal to join channel
+[0;34mJoining org2 peer to the channel...[0m
+[0;34mUsing organization 2[0m
+[34m2026-08-06 09:33:43.562 CST 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-08-06 09:33:43.903 CST 0002 INFO[0m [channelCmd] [34;1mexecuteJoin[0m -> Successfully submitted proposal to join channel
+[0;34mSetting anchor peer for org1...[0m
+[0;34mUsing organization 1[0m
+[0;34mFetching channel config for channel canal-uacm[0m
+[0;34mUsing organization 1[0m
+[0;34mFetching the most recent configuration block for the channel[0m
+[0;34mDecoding config block to JSON and isolating config to /home/rafa/hyperledger/fabric-samples/test-network/channel-artifacts/Org1MSPconfig.json[0m
+[0;34mGenerating anchor peer update transaction for Org1 on channel canal-uacm[0m
+[34m2026-08-06 09:33:44.068 CST 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-08-06 09:33:44.078 CST 0002 INFO[0m [channelCmd] [34;1mupdate[0m -> Successfully submitted channel update
+[0;32mAnchor peer set for org 'Org1MSP' on channel 'canal-uacm'[0m
+[0;34mSetting anchor peer for org2...[0m
+[0;34mUsing organization 2[0m
+[0;34mFetching channel config for channel canal-uacm[0m
+[0;34mUsing organization 2[0m
+[0;34mFetching the most recent configuration block for the channel[0m
+[0;34mDecoding config block to JSON and isolating config to /home/rafa/hyperledger/fabric-samples/test-network/channel-artifacts/Org2MSPconfig.json[0m
+[0;34mGenerating anchor peer update transaction for Org2 on channel canal-uacm[0m
+[34m2026-08-06 09:33:44.250 CST 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-08-06 09:33:44.260 CST 0002 INFO[0m [channelCmd] [34;1mupdate[0m -> Successfully submitted channel update
+[0;32mAnchor peer set for org 'Org2MSP' on channel 'canal-uacm'[0m
+[0;32mChannel 'canal-uacm' joined[0m
+=== [3/5] Desplegando Smart Contract unificado (Go v4.1 - Secuencia 3) ===
+[0;34mUsing docker and docker-compose[0m
+[0;34mdeploying chaincode on channel 'canal-uacm'[0m
+executing with the following
+- CHANNEL_NAME: [0;32mcanal-uacm[0m
+- CC_NAME: [0;32muacm-contract[0m
+- CC_SRC_PATH: [0;32m/home/rafa/hyperledger/uacm-egreso[0m
+- CC_SRC_LANGUAGE: [0;32mgo[0m
+- CC_VERSION: [0;32m4.1[0m
+- CC_SEQUENCE: [0;32m1[0m
+- CC_END_POLICY: [0;32mNA[0m
+- CC_COLL_CONFIG: [0;32mNA[0m
+- CC_INIT_FCN: [0;32mNA[0m
+- DELAY: [0;32m3[0m
+- MAX_RETRY: [0;32m5[0m
+- VERBOSE: [0;32mfalse[0m
+executing with the following
+- CC_NAME: [0;32muacm-contract[0m
+- CC_SRC_PATH: [0;32m/home/rafa/hyperledger/uacm-egreso[0m
+- CC_SRC_LANGUAGE: [0;32mgo[0m
+- CC_VERSION: [0;32m4.1[0m
+[0;34mVendoring Go dependencies at /home/rafa/hyperledger/uacm-egreso[0m
+~/hyperledger/uacm-egreso ~/hyperledger/fabric-samples/test-network
+~/hyperledger/fabric-samples/test-network
+[0;32mFinished vendoring Go dependencies[0m
+[0;32mChaincode is packaged[0m
+[0;34mInstalling chaincode on peer0.org1...[0m
+[0;34mUsing organization 1[0m
+Error: chaincode install failed with status: 500 - error in simulation: transaction returned with failure: failed to marshal response: string field contains invalid UTF-8
+[0;31mChaincode installation on peer0.org1 has failed[0m
+[0;31mDeploying chaincode failed[0m

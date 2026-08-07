@@ -8,8 +8,8 @@ type HashEvidencia struct {
 }
 
 type Expediente struct {
-	DocType      string                    `json:"docType"`
-	ID           string                    `json:"id"`
-	EstadoActual string                    `json:"estadoActual"`
-	Evidencias   map[string]*HashEvidencia `json:"evidencias"`
+	DocType        string                    `json:"docType"`
+	ID             string                    `json:"id"`
+	EstadoActual   string                    `json:"estadoActual"`
+	Evidencias     map[string]*HashEvidencia `json:"evidencias"`
 }

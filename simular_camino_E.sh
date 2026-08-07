@@ -1,10 +1,10 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ================================================================================
 # Proyecto UACM-Blockchain
-# Simulación del Camino C del MED-EC
+# Simulación del Camino E del MED-EC
 #
 # Caso inválido:
-# Se intenta registrar la titulación sin haber liberado el Servicio Social.
+# Se intenta emitir el certificado antes de confirmar el egreso.
 #
 # Resultado esperado:
 # El chaincode debe rechazar la operación.
@@ -19,11 +19,10 @@ set -e
 if [ $# -ne 1 ]; then
     echo
     echo "Uso:"
-    echo "    ./simular_camino_C.sh <MATRICULA>"
-
+    echo "    ./simular_camino_E.sh <MATRICULA>"
     echo
     echo "Ejemplo:"
-    echo "    ./simular_camino_C.sh 11-011-0654"
+    echo "    ./simular_camino_E.sh 11-011-0654"
     echo
     exit 1
 fi
@@ -31,15 +30,14 @@ fi
 MATRICULA="$1"
 
 echo "=============================================================="
-echo "Simulación MED-EC - Camino C:INSCRITO
-      ↓
-DOCUMENTACIÓN_VALIDADA
-      ↓
-EGRESADO
-      ↓
-CERTIFICADO
-      ↓
-TITULACIÓN (Caso inválido)"
+echo "Simulación MED-EC - Camino E"
+echo
+echo "INSCRITO"
+echo "      ↓"
+echo "DOCUMENTACIÓN_VALIDADA"
+echo "      ↓"
+echo "CERTIFICADO (Caso inválido)"
+echo
 echo "Matrícula : $MATRICULA"
 echo "=============================================================="
 
@@ -49,9 +47,7 @@ echo "=============================================================="
 
 HASH_INSCR=$(echo -n "${MATRICULA}_FOL-2026-INSCRIPCION" | sha256sum | awk '{print $1}')
 HASH_DOCS=$(echo -n "${MATRICULA}_FOL-2026-DOCS-UACM" | sha256sum | awk '{print $1}')
-HASH_EGRESO=$(echo -n "${MATRICULA}_FOL-2026-EGRESO" | sha256sum | awk '{print $1}')
 HASH_CERT=$(echo -n "${MATRICULA}_FOL-2026-CERTIFICADO" | sha256sum | awk '{print $1}')
-HASH_ACTA=$(echo -n "${MATRICULA}_FOL-2026-TITULACION" | sha256sum | awk '{print $1}')
 
 #------------------------------------------------------------------------------
 # Configuración Fabric
@@ -126,34 +122,7 @@ echo "========== ETAPA 2 =========="
 
 cargar_org2
 
-echo "CU-03 Confirmar egreso"
-
-peer chaincode invoke \
-$ORDERER_ARGS \
-$CHANNEL_ARGS \
-$PEERS_ARGS \
--c "{\"Args\":[\"ConfirmarEgreso\",\"$MATRICULA\",\"$HASH_EGRESO\"]}"
-
-sleep 3
-
-echo
-echo "========== ETAPA 3 =========="
-
-echo "CU-06 Emitir certificado"
-
-peer chaincode invoke \
-$ORDERER_ARGS \
-$CHANNEL_ARGS \
-$PEERS_ARGS \
--c "{\"Args\":[\"EmitirCertificado\",\"$MATRICULA\",\"$HASH_CERT\"]}"
-
-sleep 3
-
-echo
-echo "========== ETAPA 4 =========="
-echo "Intentando registrar la titulación sin cumplir todas las condiciones..."
-
-echo "CU-07 Registrar titulación (debe fallar)"
+echo "CU-06 Emitir certificado (debe fallar)"
 
 set +e
 
@@ -161,19 +130,20 @@ peer chaincode invoke \
 $ORDERER_ARGS \
 $CHANNEL_ARGS \
 $PEERS_ARGS \
--c "{\"Args\":[\"RegistrarTitulacion\",\"$MATRICULA\",\"$HASH_ACTA\"]}"
+-c "{\"Args\":[\"EmitirCertificado\",\"$MATRICULA\",\"$HASH_CERT\"]}"
 
 RESULTADO=$?
 
 set -e
 
 echo
+
 if [ $RESULTADO -eq 0 ]; then
-    echo "ERROR: La titulación fue aceptada cuando debía rechazarse."
+    echo "ERROR: El certificado fue emitido cuando debía rechazarse."
     exit 1
 else
     echo "OK: El MED-EC rechazó correctamente la operación."
-    echo "La trayectoria no cumplía las condiciones para titularse."
+    echo "La trayectoria aún no se encontraba en estado EGRESADO."
 fi
 
 echo
@@ -182,3 +152,6 @@ echo "========== EXPEDIENTE FINAL =========="
 peer chaincode query \
 $CHANNEL_ARGS \
 -c "{\"Args\":[\"ConsultarExpediente\",\"$MATRICULA\"]}" | jq '.'
+
+echo
+echo "Simulación finalizada."
