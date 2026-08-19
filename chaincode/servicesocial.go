@@ -3,7 +3,7 @@ package main
 import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 
 // IniciarServicioSocial registra el inicio del servicio social
-// sin modificar el estado administrativo del expediente.
+// y realiza la transición de ACTIVO a SS_EN_CURSO.
 func (s *SmartContract) IniciarServicioSocial(
 	ctx contractapi.TransactionContextInterface,
 	id string,
@@ -58,12 +58,15 @@ func (s *SmartContract) IniciarServicioSocial(
 		msp,
 	)
 
+	// Cambiar estado
+	expediente.EstadoActual = EstadoSSCurso
+
 	// Persistir cambios
 	return s.guardarExpediente(ctx, expediente)
 }
 
 // LiberarServicioSocial registra la liberación del servicio social
-// sin modificar el estado administrativo del expediente.
+// y realiza la transición de SS_EN_CURSO a SS_LIBERADO.
 func (s *SmartContract) LiberarServicioSocial(
 	ctx contractapi.TransactionContextInterface,
 	id string,
@@ -86,7 +89,7 @@ func (s *SmartContract) LiberarServicioSocial(
 	}
 
 	// Validar estado actual
-	if expediente.EstadoActual != EstadoActivo {
+	if expediente.EstadoActual != EstadoSSCurso {
 		return ErrEstadoInvalido
 	}
 
@@ -117,6 +120,9 @@ func (s *SmartContract) LiberarServicioSocial(
 		timestamp,
 		msp,
 	)
+
+	// Cambiar estado
+	expediente.EstadoActual = EstadoSSLiberado
 
 	// Persistir cambios
 	return s.guardarExpediente(ctx, expediente)
