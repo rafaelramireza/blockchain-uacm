@@ -3,7 +3,7 @@
 # Proyecto UACM-Blockchain
 # Simulación del Camino A del MED-EC
 # Flujo:
-# INSCRITO → DOCUMENTACIÓN_VALIDADA → EGRESADO →
+# INSCRITO → DOCUMENTACIÓN_VALIDADA → ACTIVO →
 # CERTIFICADO → SERVICIO_SOCIAL → TITULACIÓN
 # ================================================================================
 
@@ -36,7 +36,7 @@ echo "Simulación MED-EC - Camino A: INSCRITO
       ↓
 DOCUMENTACIÓN_VALIDADA
       ↓
-EGRESADO
+ACTIVO
       ↓
 CERTIFICADO
       ↓

@@ -143,7 +143,7 @@ if [ $RESULTADO -eq 0 ]; then
     exit 1
 else
     echo "OK: El MED-EC rechazó correctamente la operación."
-    echo "La trayectoria aún no se encontraba en estado EGRESADO."
+    echo "La trayectoria aún no se encontraba en estado ACTIVO."
 fi
 
 echo

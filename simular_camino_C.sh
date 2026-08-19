@@ -35,7 +35,7 @@ echo "Simulación MED-EC - Camino C:INSCRITO
       ↓
 DOCUMENTACIÓN_VALIDADA
       ↓
-EGRESADO
+ACTIVO
       ↓
 CERTIFICADO
       ↓
