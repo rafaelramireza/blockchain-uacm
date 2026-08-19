@@ -2,9 +2,9 @@ package main
 
 import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 
-// RegistrarTitulacion registra la titulación del expediente
-// y cambia su estado a TITULADO.
-func (s *SmartContract) RegistrarTitulacion(
+// EmitirTitulo registra la emisión del título y realiza la transición
+// desde CERTIFICADO o SS_LIBERADO a TITULADO.
+func (s *SmartContract) EmitirTitulo(
 	ctx contractapi.TransactionContextInterface,
 	id string,
 	hash string,
@@ -26,7 +26,8 @@ func (s *SmartContract) RegistrarTitulacion(
 	}
 
 	// Validar estado actual
-	if expediente.EstadoActual != EstadoActivo {
+	if expediente.EstadoActual != EstadoCertificado &&
+		expediente.EstadoActual != EstadoSSLiberado {
 		return ErrEstadoInvalido
 	}
 
@@ -48,15 +49,6 @@ func (s *SmartContract) RegistrarTitulacion(
 		return err
 	}
 
-	// Verificar que exista la evidencia del certificado.
-	if _, ok := expediente.Evidencias[EvCertificadoEmitido]; !ok {
-		return ErrCertificadoPendiente
-	}
-
-	if _, ok := expediente.Evidencias[EvServicioSocialLiberado]; !ok {
-		return ErrServicioSocialPendiente
-	}
-
 	// Registrar evidencia
 	agregarEvidencia(
 		expediente,
@@ -68,10 +60,7 @@ func (s *SmartContract) RegistrarTitulacion(
 	)
 
 	// Cambiar estado
-	cambiarEstado(
-		expediente,
-		EstadoTitulado,
-	)
+	expediente.EstadoActual = EstadoTitulado
 
 	// Persistir cambios
 	return s.guardarExpediente(ctx, expediente)
