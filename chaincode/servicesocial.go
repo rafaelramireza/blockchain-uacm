@@ -26,7 +26,8 @@ func (s *SmartContract) IniciarServicioSocial(
 	}
 
 	// Validar estado actual
-	if expediente.EstadoActual != EstadoActivo {
+	if expediente.EstadoActual != EstadoActivo &&
+		expediente.EstadoActual != EstadoCertificado {
 		return ErrEstadoInvalido
 	}
 

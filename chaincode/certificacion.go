@@ -26,7 +26,8 @@ func (s *SmartContract) EmitirCertificado(
 	}
 
 	// Validar estado actual
-	if expediente.EstadoActual != EstadoActivo {
+	if expediente.EstadoActual != EstadoActivo &&
+		expediente.EstadoActual != EstadoSSLiberado {
 		return ErrEstadoInvalido
 	}
 
