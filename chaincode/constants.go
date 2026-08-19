@@ -7,7 +7,7 @@ const (
 	// Estados administrativos
 	EstadoInscrito    = "INSCRITO"
 	EstadoDocValidado = "DOC_VALIDADO"
-	EstadoEgresado    = "EGRESADO"
+	EstadoActivo      = "ACTIVO"
 	EstadoTitulado    = "TITULADO"
 
 	// Evidencias
