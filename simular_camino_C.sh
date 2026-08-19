@@ -4,58 +4,59 @@
 # Simulación del Camino C del MED-EC
 #
 # Caso inválido:
-# Se intenta registrar la titulación sin haber liberado el Servicio Social.
+# Se intenta emitir el título sin haber liberado el Servicio Social.
+#
+# Condiciones previas:
+# INSCRITO → DOC_VALIDADO → ACTIVO → CERTIFICADO
 #
 # Resultado esperado:
-# El chaincode debe rechazar la operación.
+# EmitirTitulo debe ser rechazada porque el expediente
+# no cuenta con SERVICIO_SOCIAL_LIBERADO.
 # ================================================================================
 
 set -e
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Parámetros de entrada
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 if [ $# -ne 1 ]; then
     echo
     echo "Uso:"
     echo "    ./simular_camino_C.sh <MATRICULA>"
-
     echo
     echo "Ejemplo:"
-    echo "    ./simular_camino_C.sh 11-011-0654"
+    echo "    ./simular_camino_C.sh 26-011-0654"
     echo
     exit 1
 fi
 
 MATRICULA="$1"
 
-echo "=============================================================="
-echo "Simulación MED-EC - Camino C:INSCRITO
-      ↓
-DOCUMENTACIÓN_VALIDADA
-      ↓
-ACTIVO
-      ↓
-CERTIFICADO
-      ↓
-TITULACIÓN (Caso inválido)"
-echo "Matrícula : $MATRICULA"
-echo "=============================================================="
+echo "================================================================================"
+echo "Simulación MED-EC - Camino C: Caso inválido"
+echo
+echo "INSCRITO → DOC_VALIDADO → ACTIVO → CERTIFICADO"
+echo "                                      ↓"
+echo "                              TITULACIÓN ❌"
+echo
+echo "Caso: intentar emitir título sin Servicio Social liberado"
+echo "Matrícula: $MATRICULA"
+echo "================================================================================"
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Evidencias Off-Chain
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 HASH_INSCR=$(echo -n "${MATRICULA}_FOL-2026-INSCRIPCION" | sha256sum | awk '{print $1}')
 HASH_DOCS=$(echo -n "${MATRICULA}_FOL-2026-DOCS-UACM" | sha256sum | awk '{print $1}')
-HASH_EGRESO=$(echo -n "${MATRICULA}_FOL-2026-EGRESO" | sha256sum | awk '{print $1}')
+HASH_ACTIVO=$(echo -n "${MATRICULA}_FOL-2026-ACTIVO" | sha256sum | awk '{print $1}')
 HASH_CERT=$(echo -n "${MATRICULA}_FOL-2026-CERTIFICADO" | sha256sum | awk '{print $1}')
-HASH_ACTA=$(echo -n "${MATRICULA}_FOL-2026-TITULACION" | sha256sum | awk '{print $1}')
+HASH_TITULO=$(echo -n "${MATRICULA}_FOL-2026-TITULACION" | sha256sum | awk '{print $1}')
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Configuración Fabric
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 NETWORK_DIR="/home/rafa/hyperledger/fabric-samples/test-network"
 
@@ -63,45 +64,49 @@ export PATH="/home/rafa/hyperledger/fabric-samples/bin:$PATH"
 export FABRIC_CFG_PATH="/home/rafa/hyperledger/fabric-samples/config/"
 export CORE_PEER_TLS_ENABLED=true
 
-ORDERER_ARGS="-o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile $NETWORK_DIR/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/ca.crt"
+ORDERER_ARGS="-o localhost:7050 \
+--ordererTLSHostnameOverride orderer.example.com \
+--tls \
+--cafile $NETWORK_DIR/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/ca.crt"
 
 CHANNEL_ARGS="-C canal-uacm -n uacm-contract"
 
-PEERS_ARGS="--peerAddresses localhost:7051 \
+PEERS_ARGS="\
+--peerAddresses localhost:7051 \
 --tlsRootCertFiles $NETWORK_DIR/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem \
 --peerAddresses localhost:9051 \
 --tlsRootCertFiles $NETWORK_DIR/organizations/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem"
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Organizaciones
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 cargar_org1() {
-
     export CORE_PEER_LOCALMSPID="Org1MSP"
-    export CORE_PEER_TLS_ROOTCERT_FILE=$NETWORK_DIR/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
-    export CORE_PEER_MSPCONFIGPATH=$NETWORK_DIR/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+    export CORE_PEER_TLS_ROOTCERT_FILE="$NETWORK_DIR/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+    export CORE_PEER_MSPCONFIGPATH="$NETWORK_DIR/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp"
     export CORE_PEER_ADDRESS=localhost:7051
-
 }
 
 cargar_org2() {
-
     export CORE_PEER_LOCALMSPID="Org2MSP"
-    export CORE_PEER_TLS_ROOTCERT_FILE=$NETWORK_DIR/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
-    export CORE_PEER_MSPCONFIGPATH=$NETWORK_DIR/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
+    export CORE_PEER_TLS_ROOTCERT_FILE="$NETWORK_DIR/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
+    export CORE_PEER_MSPCONFIGPATH="$NETWORK_DIR/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp"
     export CORE_PEER_ADDRESS=localhost:9051
-
 }
 
 cd "$NETWORK_DIR"
 
-echo
-echo "========== ETAPA 1 =========="
+# ================================================================================
+# ETAPA 1: Registro Escolar
+# ================================================================================
 
 cargar_org1
 
-echo "CU-01 Registrar trayectoria"
+echo
+echo "========== ETAPA 1: Registro Escolar =========="
+
+echo "CU-01 Registrar trayectoria académica"
 
 peer chaincode invoke \
 $ORDERER_ARGS \
@@ -121,23 +126,31 @@ $PEERS_ARGS \
 
 sleep 3
 
-echo
-echo "========== ETAPA 2 =========="
+# ================================================================================
+# ETAPA 2: Confirmación de activo
+# ================================================================================
 
 cargar_org2
 
-echo "CU-03 Confirmar egreso"
+echo
+echo "========== ETAPA 2: Confirmación de activo =========="
+
+echo "CU-03 Confirmar activo"
 
 peer chaincode invoke \
 $ORDERER_ARGS \
 $CHANNEL_ARGS \
 $PEERS_ARGS \
--c "{\"Args\":[\"ConfirmarEgreso\",\"$MATRICULA\",\"$HASH_EGRESO\"]}"
+-c "{\"Args\":[\"ConfirmarActivo\",\"$MATRICULA\",\"$HASH_ACTIVO\"]}"
 
 sleep 3
 
+# ================================================================================
+# ETAPA 3: Certificación
+# ================================================================================
+
 echo
-echo "========== ETAPA 3 =========="
+echo "========== ETAPA 3: Certificación =========="
 
 echo "CU-06 Emitir certificado"
 
@@ -149,11 +162,16 @@ $PEERS_ARGS \
 
 sleep 3
 
-echo
-echo "========== ETAPA 4 =========="
-echo "Intentando registrar la titulación sin cumplir todas las condiciones..."
+# ================================================================================
+# ETAPA 4: Intento inválido de titulación
+# ================================================================================
 
-echo "CU-07 Registrar titulación (debe fallar)"
+echo
+echo "========== ETAPA 4: Titulación =========="
+echo
+echo "Intentando emitir el título sin Servicio Social liberado..."
+echo
+echo "CU-07 Emitir título (debe fallar)"
 
 set +e
 
@@ -161,7 +179,7 @@ peer chaincode invoke \
 $ORDERER_ARGS \
 $CHANNEL_ARGS \
 $PEERS_ARGS \
--c "{\"Args\":[\"RegistrarTitulacion\",\"$MATRICULA\",\"$HASH_ACTA\"]}"
+-c "{\"Args\":[\"EmitirTitulo\",\"$MATRICULA\",\"$HASH_TITULO\"]}"
 
 RESULTADO=$?
 
@@ -173,8 +191,13 @@ if [ $RESULTADO -eq 0 ]; then
     exit 1
 else
     echo "OK: El MED-EC rechazó correctamente la operación."
-    echo "La trayectoria no cumplía las condiciones para titularse."
+    echo "El expediente cuenta con CERTIFICADO_EMITIDO,"
+    echo "pero no cuenta con SERVICIO_SOCIAL_LIBERADO."
 fi
+
+# ================================================================================
+# EXPEDIENTE FINAL
+# ================================================================================
 
 echo
 echo "========== EXPEDIENTE FINAL =========="
@@ -182,3 +205,6 @@ echo "========== EXPEDIENTE FINAL =========="
 peer chaincode query \
 $CHANNEL_ARGS \
 -c "{\"Args\":[\"ConsultarExpediente\",\"$MATRICULA\"]}" | jq '.'
+
+echo
+echo "Prueba negativa finalizada correctamente."
