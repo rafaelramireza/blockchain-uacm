@@ -5,15 +5,18 @@ const (
 	TipoActivoExpediente = "EXPEDIENTE"
 
 	// Estados administrativos
-	EstadoInscrito    = "INSCRITO"
-	EstadoDocValidado = "DOC_VALIDADO"
-	EstadoActivo      = "ACTIVO"
-	EstadoTitulado    = "TITULADO"
+	EstadoInscrito       = "INSCRITO"
+	EstadoDocValidado    = "DOC_VALIDADO"
+	EstadoActivo         = "ACTIVO"
+	EstadoCertificado    = "CERTIFICADO"
+	EstadoSSCurso        = "SS_EN_CURSO"
+	EstadoSSLiberado     = "SS_LIBERADO"
+	EstadoTitulado       = "TITULADO"
 
 	// Evidencias
 	EvInscripcion            = "INSCRIPCION"
 	EvValidacionDocumental   = "VALIDACION_DOCUMENTAL"
-	EvEgresoConfirmado       = "EGRESO_CONFIRMADO"
+	EvActivoConfirmado       = "ACTIVO_CONFIRMADO"
 	EvCertificadoEmitido     = "CERTIFICADO_EMITIDO"
 	EvServicioSocialIniciado = "SERVICIO_SOCIAL_INICIADO"
 	EvServicioSocialLiberado = "SERVICIO_SOCIAL_LIBERADO"
