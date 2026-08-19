@@ -2,8 +2,8 @@ package main
 
 import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 
-// EmitirCertificado registra la emisión del certificado de estudios
-// sin modificar el estado administrativo del expediente.
+// EmitirCertificado registra la emisión del Certificado de Terminación de Estudios
+// y realiza la transición de ACTIVO a CERTIFICADO.
 func (s *SmartContract) EmitirCertificado(
 	ctx contractapi.TransactionContextInterface,
 	id string,
@@ -57,6 +57,9 @@ func (s *SmartContract) EmitirCertificado(
 		timestamp,
 		msp,
 	)
+
+	// Cambiar estado
+	expediente.EstadoActual = EstadoCertificado
 
 	// Persistir cambios
 	return s.guardarExpediente(ctx, expediente)
