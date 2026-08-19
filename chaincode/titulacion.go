@@ -3,7 +3,7 @@ package main
 import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 
 // EmitirTitulo registra la emisión del título y realiza la transición
-// desde CERTIFICADO o SS_LIBERADO a TITULADO.
+// a TITULADO cuando el expediente cuenta con certificado y servicio social liberado.
 func (s *SmartContract) EmitirTitulo(
 	ctx contractapi.TransactionContextInterface,
 	id string,
@@ -25,9 +25,13 @@ func (s *SmartContract) EmitirTitulo(
 		return err
 	}
 
-	// Validar estado actual
-	if expediente.EstadoActual != EstadoCertificado &&
-		expediente.EstadoActual != EstadoSSLiberado {
+	// Validar que el expediente cuente con ambas condiciones
+	// necesarias para la titulación.
+	if _, existe := expediente.Evidencias[EvCertificadoEmitido]; !existe {
+		return ErrEstadoInvalido
+	}
+
+	if _, existe := expediente.Evidencias[EvServicioSocialLiberado]; !existe {
 		return ErrEstadoInvalido
 	}
 
