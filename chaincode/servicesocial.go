@@ -26,7 +26,7 @@ func (s *SmartContract) IniciarServicioSocial(
 	}
 
 	// Validar estado actual
-	if expediente.EstadoActual != EstadoEgresado {
+	if expediente.EstadoActual != EstadoActivo {
 		return ErrEstadoInvalido
 	}
 
@@ -86,7 +86,7 @@ func (s *SmartContract) LiberarServicioSocial(
 	}
 
 	// Validar estado actual
-	if expediente.EstadoActual != EstadoEgresado {
+	if expediente.EstadoActual != EstadoActivo {
 		return ErrEstadoInvalido
 	}
 
