@@ -3,7 +3,7 @@ package main
 import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 
 // IniciarServicioSocial registra el inicio del servicio social
-// y realiza la transición de ACTIVO a SS_EN_CURSO.
+// y realiza la transición de ACTIVO o CERTIFICADO a SS_EN_CURSO.
 func (s *SmartContract) IniciarServicioSocial(
 	ctx contractapi.TransactionContextInterface,
 	id string,
@@ -25,9 +25,15 @@ func (s *SmartContract) IniciarServicioSocial(
 		return err
 	}
 
-	// Validar estado actual
+	// El servicio social puede iniciarse desde ACTIVO
+	// o desde CERTIFICADO.
 	if expediente.EstadoActual != EstadoActivo &&
 		expediente.EstadoActual != EstadoCertificado {
+		return ErrEstadoInvalido
+	}
+
+	// El inicio solo puede registrarse una vez.
+	if _, existe := expediente.Evidencias[EvServicioSocialIniciado]; existe {
 		return ErrEstadoInvalido
 	}
 
@@ -37,7 +43,7 @@ func (s *SmartContract) IniciarServicioSocial(
 		return err
 	}
 
-	if msp != OrgRegistro {
+	if msp != OrgServicioSocial {
 		return ErrMSPNoAutorizado
 	}
 
@@ -49,7 +55,7 @@ func (s *SmartContract) IniciarServicioSocial(
 		return err
 	}
 
-	// Registrar evidencia
+	// Registrar evidencia del inicio del servicio social.
 	agregarEvidencia(
 		expediente,
 		EvServicioSocialIniciado,
@@ -59,7 +65,7 @@ func (s *SmartContract) IniciarServicioSocial(
 		msp,
 	)
 
-	// Cambiar estado
+	// Transición ACTIVO/CERTIFICADO → SS_EN_CURSO.
 	expediente.EstadoActual = EstadoSSCurso
 
 	// Persistir cambios
@@ -89,8 +95,19 @@ func (s *SmartContract) LiberarServicioSocial(
 		return err
 	}
 
-	// Validar estado actual
+	// La liberación solo puede realizarse cuando
+	// el expediente está en SS_EN_CURSO.
 	if expediente.EstadoActual != EstadoSSCurso {
+		return ErrEstadoInvalido
+	}
+
+	// La liberación requiere que exista la evidencia de inicio.
+	if _, existe := expediente.Evidencias[EvServicioSocialIniciado]; !existe {
+		return ErrEstadoInvalido
+	}
+
+	// La liberación solo puede registrarse una vez.
+	if _, existe := expediente.Evidencias[EvServicioSocialLiberado]; existe {
 		return ErrEstadoInvalido
 	}
 
@@ -100,7 +117,7 @@ func (s *SmartContract) LiberarServicioSocial(
 		return err
 	}
 
-	if msp != OrgRegistro {
+	if msp != OrgServicioSocial {
 		return ErrMSPNoAutorizado
 	}
 
@@ -112,7 +129,7 @@ func (s *SmartContract) LiberarServicioSocial(
 		return err
 	}
 
-	// Registrar evidencia
+	// Registrar evidencia de liberación del servicio social.
 	agregarEvidencia(
 		expediente,
 		EvServicioSocialLiberado,
@@ -122,7 +139,7 @@ func (s *SmartContract) LiberarServicioSocial(
 		msp,
 	)
 
-	// Cambiar estado
+	// Transición SS_EN_CURSO → SS_LIBERADO.
 	expediente.EstadoActual = EstadoSSLiberado
 
 	// Persistir cambios

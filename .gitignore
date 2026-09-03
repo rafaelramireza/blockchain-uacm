@@ -82,5 +82,17 @@ node_modules/
 
 .DS_Store
 Thumbs.db
-*.bak
+*.bak*
 *.tmp
+
+# --- [ 7. ARTEFACTOS LOCALES DEL PROYECTO ] ---
+
+# Archivos generados localmente para pruebas
+config_block.json
+config_block.pb
+
+# Respaldos locales del proyecto
+backup-medec-antes-cambio/
+
+# Metadatos generados por Windows
+*:Zone.Identifier

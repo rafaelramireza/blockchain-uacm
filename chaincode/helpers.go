@@ -143,11 +143,3 @@ func agregarEvidencia(
 		TxID:      txID,
 	}
 }
-
-// cambiarEstado actualiza el estado actual del expediente.
-func cambiarEstado(
-	expediente *Expediente,
-	nuevoEstado string,
-) {
-	expediente.EstadoActual = nuevoEstado
-}

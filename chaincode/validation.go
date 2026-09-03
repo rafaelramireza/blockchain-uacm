@@ -48,7 +48,7 @@ func (s *SmartContract) ValidarDocumentos(
 		return err
 	}
 
-	// Registrar evidencia
+	// Registrar evidencia de la validación documental
 	agregarEvidencia(
 		expediente,
 		EvValidacionDocumental,
@@ -58,7 +58,8 @@ func (s *SmartContract) ValidarDocumentos(
 		msp,
 	)
 
-	// Cambiar estado
+	// La validación documental no confirma todavía el estado ACTIVO.
+	// El expediente queda en DOC_VALIDADO.
 	expediente.EstadoActual = EstadoDocValidado
 
 	// Persistir cambios

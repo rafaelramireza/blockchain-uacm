@@ -3,7 +3,6 @@ package main
 import "errors"
 
 var (
-
 	// Errores de validación
 	ErrIDVacio   = errors.New("el identificador del expediente es obligatorio")
 	ErrHashVacio = errors.New("el hash de la evidencia es obligatorio")
@@ -13,7 +12,6 @@ var (
 	ErrEstadoInvalido     = errors.New("el expediente no se encuentra en un estado válido para esta operación")
 	ErrMSPNoAutorizado    = errors.New("la organización no está autorizada para ejecutar esta operación")
 
-	ErrCertificadoPendiente = errors.New("el certificado aún no ha sido registrado")
-
+	ErrCertificadoPendiente    = errors.New("el certificado aún no ha sido registrado")
 	ErrServicioSocialPendiente = errors.New("el servicio social aún no ha sido liberado")
 )

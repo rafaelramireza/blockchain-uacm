@@ -3,7 +3,8 @@ package main
 import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 
 // EmitirTitulo registra la emisión del título y realiza la transición
-// a TITULADO cuando el expediente cuenta con certificado y servicio social liberado.
+// a TITULADO cuando existen las evidencias de certificado y servicio
+// social liberado.
 func (s *SmartContract) EmitirTitulo(
 	ctx contractapi.TransactionContextInterface,
 	id string,
@@ -25,14 +26,26 @@ func (s *SmartContract) EmitirTitulo(
 		return err
 	}
 
-	// Validar que el expediente cuente con ambas condiciones
-	// necesarias para la titulación.
-	if _, existe := expediente.Evidencias[EvCertificadoEmitido]; !existe {
+	// La titulación solo puede ejecutarse desde una de las
+	// dos ramas finales del modelo: CERTIFICADO o SS_LIBERADO.
+	if expediente.EstadoActual != EstadoCertificado &&
+		expediente.EstadoActual != EstadoSSLiberado {
 		return ErrEstadoInvalido
 	}
 
-	if _, existe := expediente.Evidencias[EvServicioSocialLiberado]; !existe {
+	// La titulación solo puede registrarse una vez.
+	if _, existe := expediente.Evidencias[EvTitulacionRegistrada]; existe {
 		return ErrEstadoInvalido
+	}
+
+	// Requiere certificado emitido.
+	if _, existe := expediente.Evidencias[EvCertificadoEmitido]; !existe {
+		return ErrCertificadoPendiente
+	}
+
+	// Requiere servicio social liberado.
+	if _, existe := expediente.Evidencias[EvServicioSocialLiberado]; !existe {
+		return ErrServicioSocialPendiente
 	}
 
 	// Validar organización
@@ -41,7 +54,7 @@ func (s *SmartContract) EmitirTitulo(
 		return err
 	}
 
-	if msp != OrgCertificacion {
+	if msp != OrgTitulacion {
 		return ErrMSPNoAutorizado
 	}
 
@@ -53,7 +66,7 @@ func (s *SmartContract) EmitirTitulo(
 		return err
 	}
 
-	// Registrar evidencia
+	// Registrar evidencia de titulación.
 	agregarEvidencia(
 		expediente,
 		EvTitulacionRegistrada,
@@ -63,7 +76,8 @@ func (s *SmartContract) EmitirTitulo(
 		msp,
 	)
 
-	// Cambiar estado
+	// Transición final:
+	// CERTIFICADO / SS_LIBERADO → TITULADO.
 	expediente.EstadoActual = EstadoTitulado
 
 	// Persistir cambios

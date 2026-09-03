@@ -2,8 +2,8 @@ package main
 
 import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 
-// ConfirmarActivo registra la confirmación de que el expediente se encuentra
-// habilitado como ACTIVO y realiza la transición de DOC_VALIDADO a ACTIVO.
+// ConfirmarActivo registra la confirmación del estado ACTIVO
+// y realiza la transición de DOC_VALIDADO a ACTIVO.
 func (s *SmartContract) ConfirmarActivo(
 	ctx contractapi.TransactionContextInterface,
 	id string,
@@ -25,7 +25,8 @@ func (s *SmartContract) ConfirmarActivo(
 		return err
 	}
 
-	// Validar estado actual
+	// La confirmación del estado ACTIVO solo puede realizarse
+	// cuando el expediente está en DOC_VALIDADO.
 	if expediente.EstadoActual != EstadoDocValidado {
 		return ErrEstadoInvalido
 	}
@@ -36,7 +37,7 @@ func (s *SmartContract) ConfirmarActivo(
 		return err
 	}
 
-	if msp != OrgCertificacion {
+	if msp != OrgRegistro {
 		return ErrMSPNoAutorizado
 	}
 
@@ -48,7 +49,7 @@ func (s *SmartContract) ConfirmarActivo(
 		return err
 	}
 
-	// Registrar evidencia
+	// Registrar evidencia de confirmación de ACTIVO
 	agregarEvidencia(
 		expediente,
 		EvActivoConfirmado,
@@ -58,7 +59,7 @@ func (s *SmartContract) ConfirmarActivo(
 		msp,
 	)
 
-	// Cambiar estado
+	// Realizar la transición
 	expediente.EstadoActual = EstadoActivo
 
 	// Persistir cambios

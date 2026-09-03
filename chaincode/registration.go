@@ -14,10 +14,6 @@ import (
 //   - Solo puede ser ejecutado por OrgRegistro.
 //   - El estado inicial será INSCRITO.
 
-const (
-	EvidenciaInscripcion = "INSCRIPCION"
-)
-
 func (s *SmartContract) RegistrarInscripcion(
 	ctx contractapi.TransactionContextInterface,
 	id string,
@@ -26,12 +22,12 @@ func (s *SmartContract) RegistrarInscripcion(
 
 	// Validar identificador
 	if id == "" {
-		return fmt.Errorf("el identificador del expediente es obligatorio")
+		return ErrIDVacio
 	}
 
 	// Validar hash
 	if hash == "" {
-		return fmt.Errorf("el hash de la evidencia es obligatorio")
+		return ErrHashVacio
 	}
 
 	// Verificar si el expediente ya existe
@@ -51,7 +47,7 @@ func (s *SmartContract) RegistrarInscripcion(
 	}
 
 	if msp != OrgRegistro {
-		return fmt.Errorf("la organización %s no está autorizada para registrar inscripciones", msp)
+		return ErrMSPNoAutorizado
 	}
 
 	txID := obtenerTxID(ctx)
@@ -77,11 +73,5 @@ func (s *SmartContract) RegistrarInscripcion(
 		msp,
 	)
 
-	cambiarEstado(
-		expediente,
-		EstadoInscrito,
-	)
-
 	return s.guardarExpediente(ctx, expediente)
-
 }
