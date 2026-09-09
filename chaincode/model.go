@@ -9,7 +9,7 @@ type HashEvidencia struct {
 	Emisor               string `json:"emisor"`
 	TxID                 string `json:"txId"`
 	Tipo                 string `json:"tipo"`
-	TxIDTransicionOrigen string `json:"txIdTransicionOrigen,omitempty"`
+	TxIDTransicionOrigen string `json:"txIdTransicionOrigen"`
 }
 
 type Expediente struct {
