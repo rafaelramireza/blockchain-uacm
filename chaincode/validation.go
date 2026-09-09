@@ -7,16 +7,11 @@ import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 func (s *SmartContract) ValidarDocumentos(
 	ctx contractapi.TransactionContextInterface,
 	id string,
-	hash string,
 ) error {
 
 	// Validar parámetros
 	if id == "" {
 		return ErrIDVacio
-	}
-
-	if hash == "" {
-		return ErrHashVacio
 	}
 
 	// Obtener expediente
@@ -51,11 +46,12 @@ func (s *SmartContract) ValidarDocumentos(
 	// Registrar evidencia de la validación documental
 	agregarEvidencia(
 		expediente,
+		EstadoInscrito,
 		EvValidacionDocumental,
-		hash,
-		txID,
-		timestamp,
+		EstadoDocValidado,
 		msp,
+		timestamp,
+		txID,
 	)
 
 	// La validación documental no confirma todavía el estado ACTIVO.

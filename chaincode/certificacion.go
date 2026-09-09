@@ -8,16 +8,11 @@ import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 func (s *SmartContract) EmitirCertificado(
 	ctx contractapi.TransactionContextInterface,
 	id string,
-	hash string,
 ) error {
 
 	// Validar parámetros
 	if id == "" {
 		return ErrIDVacio
-	}
-
-	if hash == "" {
-		return ErrHashVacio
 	}
 
 	// Obtener expediente
@@ -33,8 +28,9 @@ func (s *SmartContract) EmitirCertificado(
 		return ErrEstadoInvalido
 	}
 
-	// El certificado solo puede registrarse una vez.
-	if _, existe := expediente.Evidencias[EvCertificadoEmitido]; existe {
+	// El certificado solo puede estar vigente una vez.
+	// Si una emisión anterior fue rectificada, puede volver a emitirse.
+	if existeTransicionVigente(expediente, EvCertificadoEmitido) {
 		return ErrEstadoInvalido
 	}
 
@@ -59,11 +55,12 @@ func (s *SmartContract) EmitirCertificado(
 	// Registrar evidencia
 	agregarEvidencia(
 		expediente,
+		expediente.EstadoActual,
 		EvCertificadoEmitido,
-		hash,
-		txID,
-		timestamp,
+		EstadoCertificado,
 		msp,
+		timestamp,
+		txID,
 	)
 
 	// Transición ACTIVO/SS_LIBERADO → CERTIFICADO.

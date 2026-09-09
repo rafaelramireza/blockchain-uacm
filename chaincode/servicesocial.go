@@ -7,16 +7,11 @@ import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 func (s *SmartContract) IniciarServicioSocial(
 	ctx contractapi.TransactionContextInterface,
 	id string,
-	hash string,
 ) error {
 
 	// Validar parámetros
 	if id == "" {
 		return ErrIDVacio
-	}
-
-	if hash == "" {
-		return ErrHashVacio
 	}
 
 	// Obtener expediente
@@ -32,8 +27,9 @@ func (s *SmartContract) IniciarServicioSocial(
 		return ErrEstadoInvalido
 	}
 
-	// El inicio solo puede registrarse una vez.
-	if _, existe := expediente.Evidencias[EvServicioSocialIniciado]; existe {
+	// El inicio solo puede estar vigente una vez.
+	// Si una operación anterior fue rectificada, puede volver a iniciarse.
+	if existeTransicionVigente(expediente, EvServicioSocialIniciado) {
 		return ErrEstadoInvalido
 	}
 
@@ -58,11 +54,12 @@ func (s *SmartContract) IniciarServicioSocial(
 	// Registrar evidencia del inicio del servicio social.
 	agregarEvidencia(
 		expediente,
+		expediente.EstadoActual,
 		EvServicioSocialIniciado,
-		hash,
-		txID,
-		timestamp,
+		EstadoSSCurso,
 		msp,
+		timestamp,
+		txID,
 	)
 
 	// Transición ACTIVO/CERTIFICADO → SS_EN_CURSO.
@@ -77,16 +74,11 @@ func (s *SmartContract) IniciarServicioSocial(
 func (s *SmartContract) LiberarServicioSocial(
 	ctx contractapi.TransactionContextInterface,
 	id string,
-	hash string,
 ) error {
 
 	// Validar parámetros
 	if id == "" {
 		return ErrIDVacio
-	}
-
-	if hash == "" {
-		return ErrHashVacio
 	}
 
 	// Obtener expediente
@@ -101,13 +93,15 @@ func (s *SmartContract) LiberarServicioSocial(
 		return ErrEstadoInvalido
 	}
 
-	// La liberación requiere que exista la evidencia de inicio.
-	if _, existe := expediente.Evidencias[EvServicioSocialIniciado]; !existe {
+	// La liberación requiere que exista una evidencia
+	// vigente de inicio del servicio social.
+	if !existeTransicionVigente(expediente, EvServicioSocialIniciado) {
 		return ErrEstadoInvalido
 	}
 
-	// La liberación solo puede registrarse una vez.
-	if _, existe := expediente.Evidencias[EvServicioSocialLiberado]; existe {
+	// La liberación solo puede estar vigente una vez.
+	// Si una liberación anterior fue rectificada, puede volver a realizarse.
+	if existeTransicionVigente(expediente, EvServicioSocialLiberado) {
 		return ErrEstadoInvalido
 	}
 
@@ -132,11 +126,12 @@ func (s *SmartContract) LiberarServicioSocial(
 	// Registrar evidencia de liberación del servicio social.
 	agregarEvidencia(
 		expediente,
+		EstadoSSCurso,
 		EvServicioSocialLiberado,
-		hash,
-		txID,
-		timestamp,
+		EstadoSSLiberado,
 		msp,
+		timestamp,
+		txID,
 	)
 
 	// Transición SS_EN_CURSO → SS_LIBERADO.

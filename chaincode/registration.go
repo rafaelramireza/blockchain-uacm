@@ -17,17 +17,11 @@ import (
 func (s *SmartContract) RegistrarInscripcion(
 	ctx contractapi.TransactionContextInterface,
 	id string,
-	hash string,
 ) error {
 
 	// Validar identificador
 	if id == "" {
 		return ErrIDVacio
-	}
-
-	// Validar hash
-	if hash == "" {
-		return ErrHashVacio
 	}
 
 	// Verificar si el expediente ya existe
@@ -61,16 +55,16 @@ func (s *SmartContract) RegistrarInscripcion(
 		DocType:      TipoActivoExpediente,
 		ID:           id,
 		EstadoActual: EstadoInscrito,
-		Evidencias:   make(map[string]*HashEvidencia),
 	}
 
 	agregarEvidencia(
 		expediente,
+		"",
 		EvInscripcion,
-		hash,
-		txID,
-		timestamp,
+		EstadoInscrito,
 		msp,
+		timestamp,
+		txID,
 	)
 
 	return s.guardarExpediente(ctx, expediente)

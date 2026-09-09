@@ -7,16 +7,11 @@ import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 func (s *SmartContract) ConfirmarActivo(
 	ctx contractapi.TransactionContextInterface,
 	id string,
-	hash string,
 ) error {
 
 	// Validar parámetros
 	if id == "" {
 		return ErrIDVacio
-	}
-
-	if hash == "" {
-		return ErrHashVacio
 	}
 
 	// Obtener expediente
@@ -52,11 +47,12 @@ func (s *SmartContract) ConfirmarActivo(
 	// Registrar evidencia de confirmación de ACTIVO
 	agregarEvidencia(
 		expediente,
+		EstadoDocValidado,
 		EvActivoConfirmado,
-		hash,
-		txID,
-		timestamp,
+		EstadoActivo,
 		msp,
+		timestamp,
+		txID,
 	)
 
 	// Realizar la transición

@@ -8,16 +8,11 @@ import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 func (s *SmartContract) EmitirTitulo(
 	ctx contractapi.TransactionContextInterface,
 	id string,
-	hash string,
 ) error {
 
 	// Validar parámetros
 	if id == "" {
 		return ErrIDVacio
-	}
-
-	if hash == "" {
-		return ErrHashVacio
 	}
 
 	// Obtener expediente
@@ -33,18 +28,19 @@ func (s *SmartContract) EmitirTitulo(
 		return ErrEstadoInvalido
 	}
 
-	// La titulación solo puede registrarse una vez.
-	if _, existe := expediente.Evidencias[EvTitulacionRegistrada]; existe {
+	// La titulación solo puede estar vigente una vez.
+	// Si una titulación anterior fue rectificada, puede volver a realizarse.
+	if existeTransicionVigente(expediente, EvTitulacionRegistrada) {
 		return ErrEstadoInvalido
 	}
 
-	// Requiere certificado emitido.
-	if _, existe := expediente.Evidencias[EvCertificadoEmitido]; !existe {
+	// Requiere certificado emitido y vigente.
+	if !existeTransicionVigente(expediente, EvCertificadoEmitido) {
 		return ErrCertificadoPendiente
 	}
 
-	// Requiere servicio social liberado.
-	if _, existe := expediente.Evidencias[EvServicioSocialLiberado]; !existe {
+	// Requiere servicio social liberado y vigente.
+	if !existeTransicionVigente(expediente, EvServicioSocialLiberado) {
 		return ErrServicioSocialPendiente
 	}
 
@@ -69,11 +65,12 @@ func (s *SmartContract) EmitirTitulo(
 	// Registrar evidencia de titulación.
 	agregarEvidencia(
 		expediente,
+		expediente.EstadoActual,
 		EvTitulacionRegistrada,
-		hash,
-		txID,
-		timestamp,
+		EstadoTitulado,
 		msp,
+		timestamp,
+		txID,
 	)
 
 	// Transición final:

@@ -3,8 +3,10 @@ package main
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/hex"
 	"encoding/pem"
 	"math/big"
 	"testing"
@@ -131,6 +133,26 @@ func newTestContext(stub shim.ChaincodeStubInterface) *contractapi.TransactionCo
 	return ctx
 }
 
+func calcularHashEsperado(
+	id string,
+	estadoAnterior string,
+	evento string,
+	estadoNuevo string,
+	emisor string,
+	timestamp string,
+) string {
+	datos := id + "|" +
+		estadoAnterior + "|" +
+		evento + "|" +
+		estadoNuevo + "|" +
+		emisor + "|" +
+		timestamp
+
+	hash := sha256.Sum256([]byte(datos))
+
+	return hex.EncodeToString(hash[:])
+}
+
 func crearExpedienteDePrueba(
 	t *testing.T,
 	contract *SmartContract,
@@ -141,7 +163,6 @@ func crearExpedienteDePrueba(
 	if err := contract.RegistrarInscripcion(
 		ctx,
 		"EXP-001",
-		"hash-inscripcion",
 	); err != nil {
 		t.Fatalf("RegistrarInscripcion() error = %v", err)
 	}
@@ -149,7 +170,6 @@ func crearExpedienteDePrueba(
 	if err := contract.ValidarDocumentos(
 		ctx,
 		"EXP-001",
-		"hash-validacion",
 	); err != nil {
 		t.Fatalf("ValidarDocumentos() error = %v", err)
 	}
@@ -157,7 +177,6 @@ func crearExpedienteDePrueba(
 	if err := contract.ConfirmarActivo(
 		ctx,
 		"EXP-001",
-		"hash-activo",
 	); err != nil {
 		t.Fatalf("ConfirmarActivo() error = %v", err)
 	}
@@ -179,7 +198,6 @@ func TestRutaCertificadoServicioSocialTitulacion(t *testing.T) {
 	if err := contract.EmitirCertificado(
 		ctxCertificacion,
 		"EXP-001",
-		"hash-certificado",
 	); err != nil {
 		t.Fatalf("EmitirCertificado() error = %v", err)
 	}
@@ -192,7 +210,6 @@ func TestRutaCertificadoServicioSocialTitulacion(t *testing.T) {
 	if err := contract.IniciarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-inicio",
 	); err != nil {
 		t.Fatalf("IniciarServicioSocial() error = %v", err)
 	}
@@ -200,7 +217,6 @@ func TestRutaCertificadoServicioSocialTitulacion(t *testing.T) {
 	if err := contract.LiberarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-liberado",
 	); err != nil {
 		t.Fatalf("LiberarServicioSocial() error = %v", err)
 	}
@@ -213,7 +229,6 @@ func TestRutaCertificadoServicioSocialTitulacion(t *testing.T) {
 	if err := contract.EmitirTitulo(
 		ctxTitulacion,
 		"EXP-001",
-		"hash-titulo",
 	); err != nil {
 		t.Fatalf("EmitirTitulo() error = %v", err)
 	}
@@ -249,7 +264,6 @@ func TestRutaServicioSocialCertificadoTitulacion(t *testing.T) {
 	if err := contract.IniciarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-inicio",
 	); err != nil {
 		t.Fatalf("IniciarServicioSocial() error = %v", err)
 	}
@@ -257,7 +271,6 @@ func TestRutaServicioSocialCertificadoTitulacion(t *testing.T) {
 	if err := contract.LiberarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-liberado",
 	); err != nil {
 		t.Fatalf("LiberarServicioSocial() error = %v", err)
 	}
@@ -268,7 +281,6 @@ func TestRutaServicioSocialCertificadoTitulacion(t *testing.T) {
 	if err := contract.EmitirCertificado(
 		ctxCertificacion,
 		"EXP-001",
-		"hash-certificado",
 	); err != nil {
 		t.Fatalf("EmitirCertificado() error = %v", err)
 	}
@@ -279,7 +291,6 @@ func TestRutaServicioSocialCertificadoTitulacion(t *testing.T) {
 	if err := contract.EmitirTitulo(
 		ctxTitulacion,
 		"EXP-001",
-		"hash-titulo",
 	); err != nil {
 		t.Fatalf("EmitirTitulo() error = %v", err)
 	}
@@ -315,7 +326,6 @@ func TestEmitirTituloSinCertificado(t *testing.T) {
 	if err := contract.IniciarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-inicio",
 	); err != nil {
 		t.Fatalf("IniciarServicioSocial() error = %v", err)
 	}
@@ -323,7 +333,6 @@ func TestEmitirTituloSinCertificado(t *testing.T) {
 	if err := contract.LiberarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-liberado",
 	); err != nil {
 		t.Fatalf("LiberarServicioSocial() error = %v", err)
 	}
@@ -334,7 +343,6 @@ func TestEmitirTituloSinCertificado(t *testing.T) {
 	err := contract.EmitirTitulo(
 		ctxTitulacion,
 		"EXP-001",
-		"hash-titulo",
 	)
 
 	if err != ErrCertificadoPendiente {
@@ -359,7 +367,6 @@ func TestEmitirTituloSinServicioSocial(t *testing.T) {
 	if err := contract.EmitirCertificado(
 		ctxCertificacion,
 		"EXP-001",
-		"hash-certificado",
 	); err != nil {
 		t.Fatalf("EmitirCertificado() error = %v", err)
 	}
@@ -370,7 +377,6 @@ func TestEmitirTituloSinServicioSocial(t *testing.T) {
 	err := contract.EmitirTitulo(
 		ctxTitulacion,
 		"EXP-001",
-		"hash-titulo",
 	)
 
 	if err != ErrServicioSocialPendiente {
@@ -395,7 +401,6 @@ func TestOperacionConMSPNoAutorizado(t *testing.T) {
 	err := contract.EmitirCertificado(
 		ctxTitulacion,
 		"EXP-001",
-		"hash-certificado",
 	)
 
 	if err != ErrMSPNoAutorizado {
@@ -420,7 +425,6 @@ func TestNoPermitirOperacionDesdeTITULADO(t *testing.T) {
 	if err := contract.EmitirCertificado(
 		ctxCertificacion,
 		"EXP-001",
-		"hash-certificado",
 	); err != nil {
 		t.Fatalf("EmitirCertificado() error = %v", err)
 	}
@@ -431,7 +435,6 @@ func TestNoPermitirOperacionDesdeTITULADO(t *testing.T) {
 	if err := contract.IniciarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-inicio",
 	); err != nil {
 		t.Fatalf("IniciarServicioSocial() error = %v", err)
 	}
@@ -439,7 +442,6 @@ func TestNoPermitirOperacionDesdeTITULADO(t *testing.T) {
 	if err := contract.LiberarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-liberado",
 	); err != nil {
 		t.Fatalf("LiberarServicioSocial() error = %v", err)
 	}
@@ -450,7 +452,6 @@ func TestNoPermitirOperacionDesdeTITULADO(t *testing.T) {
 	if err := contract.EmitirTitulo(
 		ctxTitulacion,
 		"EXP-001",
-		"hash-titulo",
 	); err != nil {
 		t.Fatalf("EmitirTitulo() error = %v", err)
 	}
@@ -461,7 +462,6 @@ func TestNoPermitirOperacionDesdeTITULADO(t *testing.T) {
 	err := contract.EmitirCertificado(
 		ctxCertificacion,
 		"EXP-001",
-		"hash-certificado-2",
 	)
 
 	if err != ErrEstadoInvalido {
@@ -486,7 +486,6 @@ func TestActivoPuedeEmitirCertificado(t *testing.T) {
 	if err := contract.EmitirCertificado(
 		ctxCertificacion,
 		"EXP-001",
-		"hash-certificado",
 	); err != nil {
 		t.Fatalf("EmitirCertificado() error = %v", err)
 	}
@@ -522,7 +521,6 @@ func TestActivoPuedeIniciarServicioSocial(t *testing.T) {
 	if err := contract.IniciarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-inicio",
 	); err != nil {
 		t.Fatalf("IniciarServicioSocial() error = %v", err)
 	}
@@ -558,7 +556,6 @@ func TestEmitirTituloNoPuedeEjecutarseDosVeces(t *testing.T) {
 	if err := contract.EmitirCertificado(
 		ctxCertificacion,
 		"EXP-001",
-		"hash-certificado",
 	); err != nil {
 		t.Fatalf("EmitirCertificado() error = %v", err)
 	}
@@ -569,7 +566,6 @@ func TestEmitirTituloNoPuedeEjecutarseDosVeces(t *testing.T) {
 	if err := contract.IniciarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-inicio",
 	); err != nil {
 		t.Fatalf("IniciarServicioSocial() error = %v", err)
 	}
@@ -577,7 +573,6 @@ func TestEmitirTituloNoPuedeEjecutarseDosVeces(t *testing.T) {
 	if err := contract.LiberarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-liberado",
 	); err != nil {
 		t.Fatalf("LiberarServicioSocial() error = %v", err)
 	}
@@ -588,7 +583,6 @@ func TestEmitirTituloNoPuedeEjecutarseDosVeces(t *testing.T) {
 	if err := contract.EmitirTitulo(
 		ctxTitulacion,
 		"EXP-001",
-		"hash-titulo",
 	); err != nil {
 		t.Fatalf("primer EmitirTitulo() error = %v", err)
 	}
@@ -596,7 +590,6 @@ func TestEmitirTituloNoPuedeEjecutarseDosVeces(t *testing.T) {
 	err := contract.EmitirTitulo(
 		ctxTitulacion,
 		"EXP-001",
-		"hash-titulo-2",
 	)
 
 	if err != ErrEstadoInvalido {
@@ -621,7 +614,6 @@ func TestEmitirTituloRegistraEvidenciaCompleta(t *testing.T) {
 	if err := contract.EmitirCertificado(
 		ctxCertificacion,
 		"EXP-001",
-		"hash-certificado",
 	); err != nil {
 		t.Fatalf("EmitirCertificado() error = %v", err)
 	}
@@ -632,7 +624,6 @@ func TestEmitirTituloRegistraEvidenciaCompleta(t *testing.T) {
 	if err := contract.IniciarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-inicio",
 	); err != nil {
 		t.Fatalf("IniciarServicioSocial() error = %v", err)
 	}
@@ -640,7 +631,6 @@ func TestEmitirTituloRegistraEvidenciaCompleta(t *testing.T) {
 	if err := contract.LiberarServicioSocial(
 		ctxServicio,
 		"EXP-001",
-		"hash-ss-liberado",
 	); err != nil {
 		t.Fatalf("LiberarServicioSocial() error = %v", err)
 	}
@@ -651,7 +641,6 @@ func TestEmitirTituloRegistraEvidenciaCompleta(t *testing.T) {
 	if err := contract.EmitirTitulo(
 		ctxTitulacion,
 		"EXP-001",
-		"hash-titulo",
 	); err != nil {
 		t.Fatalf("EmitirTitulo() error = %v", err)
 	}
@@ -664,15 +653,25 @@ func TestEmitirTituloRegistraEvidenciaCompleta(t *testing.T) {
 		t.Fatalf("ConsultarExpediente() error = %v", err)
 	}
 
-	evidencia, existe := expediente.Evidencias[EvTitulacionRegistrada]
-	if !existe {
+	var evidencia *HashEvidencia
+
+	for _, e := range expediente.HistorialTransiciones {
+		if e.Evento == EvTitulacionRegistrada {
+			evidencia = e
+			break
+		}
+	}
+
+	if evidencia == nil {
 		t.Fatal("no se encontró la evidencia de titulación")
 	}
 
-	if evidencia.Hash != "hash-titulo" {
+	hashEsperado := calcularHashEsperado("EXP-001", evidencia.EstadoAnterior, evidencia.Evento, evidencia.EstadoNuevo, evidencia.Emisor, evidencia.Timestamp)
+	if evidencia.Hash != hashEsperado {
 		t.Fatalf(
-			"Hash = %s, se esperaba hash-titulo",
+			"Hash = %s, se esperaba %s",
 			evidencia.Hash,
+			hashEsperado,
 		)
 	}
 
@@ -705,7 +704,6 @@ func TestRegistrarInscripcionIniciaEnINSCRITO(t *testing.T) {
 	if err := contract.RegistrarInscripcion(
 		ctx,
 		"EXP-001",
-		"hash-inscripcion",
 	); err != nil {
 		t.Fatalf("RegistrarInscripcion() error = %v", err)
 	}
@@ -736,7 +734,6 @@ func TestConfirmarActivoAntesDeValidarDocumentos(t *testing.T) {
 	if err := contract.RegistrarInscripcion(
 		ctx,
 		"EXP-001",
-		"hash-inscripcion",
 	); err != nil {
 		t.Fatalf("RegistrarInscripcion() error = %v", err)
 	}
@@ -744,7 +741,6 @@ func TestConfirmarActivoAntesDeValidarDocumentos(t *testing.T) {
 	err := contract.ConfirmarActivo(
 		ctx,
 		"EXP-001",
-		"hash-activo",
 	)
 
 	if err != ErrEstadoInvalido {
@@ -764,7 +760,6 @@ func TestTransicionRegistraUnaEvidencia(t *testing.T) {
 	if err := contract.RegistrarInscripcion(
 		ctx,
 		"EXP-001",
-		"hash-inscripcion",
 	); err != nil {
 		t.Fatalf("RegistrarInscripcion() error = %v", err)
 	}
@@ -777,15 +772,25 @@ func TestTransicionRegistraUnaEvidencia(t *testing.T) {
 		t.Fatalf("ConsultarExpediente() error = %v", err)
 	}
 
-	evidencia, existe := expediente.Evidencias[EvInscripcion]
-	if !existe {
+	var evidencia *HashEvidencia
+
+	for _, e := range expediente.HistorialTransiciones {
+		if e.Evento == EvInscripcion {
+			evidencia = e
+			break
+		}
+	}
+
+	if evidencia == nil {
 		t.Fatal("no se encontró la evidencia de inscripción")
 	}
 
-	if evidencia.Hash != "hash-inscripcion" {
+	hashEsperado := calcularHashEsperado("EXP-001", evidencia.EstadoAnterior, evidencia.Evento, evidencia.EstadoNuevo, evidencia.Emisor, evidencia.Timestamp)
+	if evidencia.Hash != hashEsperado {
 		t.Fatalf(
-			"Hash = %s, se esperaba hash-inscripcion",
+			"Hash = %s, se esperaba %s",
 			evidencia.Hash,
+			hashEsperado,
 		)
 	}
 
@@ -808,10 +813,10 @@ func TestTransicionRegistraUnaEvidencia(t *testing.T) {
 		)
 	}
 
-	if len(expediente.Evidencias) != 1 {
+	if len(expediente.HistorialTransiciones) != 1 {
 		t.Fatalf(
 			"número de evidencias = %d, se esperaba 1",
-			len(expediente.Evidencias),
+			len(expediente.HistorialTransiciones),
 		)
 	}
 }
@@ -825,7 +830,6 @@ func TestEvidenciaPersistidaEnWorldState(t *testing.T) {
 	if err := contract.RegistrarInscripcion(
 		ctx,
 		"EXP-001",
-		"hash-inscripcion",
 	); err != nil {
 		t.Fatalf("RegistrarInscripcion() error = %v", err)
 	}
@@ -855,15 +859,1636 @@ func TestEvidenciaPersistidaEnWorldState(t *testing.T) {
 		t.Fatalf("ConsultarExpediente() error = %v", err)
 	}
 
-	evidencia, existe := expediente.Evidencias[EvInscripcion]
-	if !existe {
+	var evidencia *HashEvidencia
+
+	for _, e := range expediente.HistorialTransiciones {
+		if e.Evento == EvInscripcion {
+			evidencia = e
+			break
+		}
+	}
+
+	if evidencia == nil {
 		t.Fatal("la evidencia no fue persistida en el World State")
 	}
 
-	if evidencia.Hash != "hash-inscripcion" {
+	hashEsperado := calcularHashEsperado("EXP-001", evidencia.EstadoAnterior, evidencia.Evento, evidencia.EstadoNuevo, evidencia.Emisor, evidencia.Timestamp)
+	if evidencia.Hash != hashEsperado {
 		t.Fatalf(
-			"Hash persistido = %s, se esperaba hash-inscripcion",
+			"Hash persistido = %s, se esperaba %s",
 			evidencia.Hash,
+			hashEsperado,
+		)
+	}
+}
+
+func TestRectificarTransicionBasica(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	// Registrar inscripción.
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-001",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	// Validar documentos.
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-001",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	// Rectificar la transición de validación.
+	stub.txID = "TX-RECTIFICACION"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-001",
+		"TX-VALIDACION",
+	); err != nil {
+		t.Fatalf(
+			"RectificarTransicion() error = %v",
+			err,
+		)
+	}
+
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-001",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	// El estado debe regresar al estado anterior.
+	if expediente.EstadoActual != EstadoInscrito {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoInscrito,
+		)
+	}
+
+	// Deben conservarse las dos transiciones originales
+	// y registrarse la nueva rectificación.
+	if len(expediente.HistorialTransiciones) != 3 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 3",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+
+	// La transición original debe permanecer en el historial.
+	var transicion *HashEvidencia
+
+	for _, evidencia := range expediente.HistorialTransiciones {
+		if evidencia.Tipo == "TRANSICION" &&
+			evidencia.TxID == "TX-VALIDACION" {
+			transicion = evidencia
+			break
+		}
+	}
+
+	if transicion == nil {
+		t.Fatal(
+			"no se encontró la transición original TX-VALIDACION",
+		)
+	}
+
+	if transicion.EstadoAnterior != EstadoInscrito {
+		t.Fatalf(
+			"EstadoAnterior de transición = %s, se esperaba %s",
+			transicion.EstadoAnterior,
+			EstadoInscrito,
+		)
+	}
+
+	if transicion.EstadoNuevo != EstadoDocValidado {
+		t.Fatalf(
+			"EstadoNuevo de transición = %s, se esperaba %s",
+			transicion.EstadoNuevo,
+			EstadoDocValidado,
+		)
+	}
+
+	// Buscar la rectificación.
+	var rectificacion *HashEvidencia
+
+	for _, evidencia := range expediente.HistorialTransiciones {
+		if evidencia.Tipo == "RECTIFICACION" {
+			rectificacion = evidencia
+			break
+		}
+	}
+
+	if rectificacion == nil {
+		t.Fatal(
+			"no se encontró la rectificación",
+		)
+	}
+
+	if rectificacion.TxID != "TX-RECTIFICACION" {
+		t.Fatalf(
+			"TxID de rectificación = %s, se esperaba TX-RECTIFICACION",
+			rectificacion.TxID,
+		)
+	}
+
+	if rectificacion.TxIDTransicionOrigen != "TX-VALIDACION" {
+		t.Fatalf(
+			"TxIDTransicionOrigen = %s, se esperaba TX-VALIDACION",
+			rectificacion.TxIDTransicionOrigen,
+		)
+	}
+
+	if rectificacion.EstadoAnterior != EstadoDocValidado {
+		t.Fatalf(
+			"EstadoAnterior de rectificación = %s, se esperaba %s",
+			rectificacion.EstadoAnterior,
+			EstadoDocValidado,
+		)
+	}
+
+	if rectificacion.EstadoNuevo != EstadoInscrito {
+		t.Fatalf(
+			"EstadoNuevo de rectificación = %s, se esperaba %s",
+			rectificacion.EstadoNuevo,
+			EstadoInscrito,
+		)
+	}
+
+	if rectificacion.Evento != "RECTIFICACION" {
+		t.Fatalf(
+			"Evento = %s, se esperaba RECTIFICACION",
+			rectificacion.Evento,
+		)
+	}
+
+	if rectificacion.Emisor != OrgRegistro {
+		t.Fatalf(
+			"Emisor = %s, se esperaba %s",
+			rectificacion.Emisor,
+			OrgRegistro,
+		)
+	}
+}
+
+func TestRectificarTransicionDosVeces(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-002",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-002",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	// Primera rectificación.
+	stub.txID = "TX-RECTIFICACION-1"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-002",
+		"TX-VALIDACION",
+	); err != nil {
+		t.Fatalf(
+			"primera RectificarTransicion() error = %v",
+			err,
+		)
+	}
+
+	// Segunda rectificación de la misma transición.
+	stub.txID = "TX-RECTIFICACION-2"
+
+	err := contract.RectificarTransicion(
+		ctx,
+		"EXP-002",
+		"TX-VALIDACION",
+	)
+
+	if err != ErrTransicionYaRectificada {
+		t.Fatalf(
+			"error = %v, se esperaba ErrTransicionYaRectificada",
+			err,
+		)
+	}
+}
+
+func TestRectificarTransicionMSPDiferente(t *testing.T) {
+	contract := new(SmartContract)
+
+	// RegistroEscolarMSP ejecuta la transición original.
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-003",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-003",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	// Otro MSP intenta rectificar la transición.
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-RECTIFICACION-NO-AUTORIZADA"
+
+	err := contract.RectificarTransicion(
+		ctx,
+		"EXP-003",
+		"TX-VALIDACION",
+	)
+
+	if err != ErrRectificacionNoAutorizada {
+		t.Fatalf(
+			"error = %v, se esperaba ErrRectificacionNoAutorizada",
+			err,
+		)
+	}
+
+	// El expediente no debe haber sido modificado.
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-003",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoDocValidado {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoDocValidado,
+		)
+	}
+
+	if len(expediente.HistorialTransiciones) != 2 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 2",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+}
+
+func TestRectificarTransicionConOperacionPosterior(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-004",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-004",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	stub.txID = "TX-ACTIVO"
+
+	if err := contract.ConfirmarActivo(
+		ctx,
+		"EXP-004",
+	); err != nil {
+		t.Fatalf("ConfirmarActivo() error = %v", err)
+	}
+
+	// Intentar rectificar una transición que ya tiene
+	// una operación posterior.
+	stub.txID = "TX-RECTIFICACION"
+
+	err := contract.RectificarTransicion(
+		ctx,
+		"EXP-004",
+		"TX-VALIDACION",
+	)
+
+	if err != ErrTransicionNoRectificable {
+		t.Fatalf(
+			"error = %v, se esperaba ErrTransicionNoRectificable",
+			err,
+		)
+	}
+
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-004",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoActivo {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoActivo,
+		)
+	}
+
+	if len(expediente.HistorialTransiciones) != 3 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 3",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+}
+
+func TestRectificarTransicionInexistente(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-005",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-RECTIFICACION"
+
+	err := contract.RectificarTransicion(
+		ctx,
+		"EXP-005",
+		"TX-NO-EXISTE",
+	)
+
+	if err != ErrTransicionNoExiste {
+		t.Fatalf(
+			"error = %v, se esperaba ErrTransicionNoExiste",
+			err,
+		)
+	}
+
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-005",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoInscrito {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoInscrito,
+		)
+	}
+
+	if len(expediente.HistorialTransiciones) != 1 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaba 1",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+}
+
+func TestRectificarTransicionConRamaCompleta(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	// INSCRITO
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-006",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	// INSCRITO → DOC_VALIDADO
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-006",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	// DOC_VALIDADO → ACTIVO
+	stub.txID = "TX-ACTIVO"
+
+	if err := contract.ConfirmarActivo(
+		ctx,
+		"EXP-006",
+	); err != nil {
+		t.Fatalf("ConfirmarActivo() error = %v", err)
+	}
+
+	// ACTIVO → CERTIFICADO
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-CERTIFICADO"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-006",
+	); err != nil {
+		t.Fatalf("EmitirCertificado() error = %v", err)
+	}
+
+	// CERTIFICADO → SS_EN_CURSO
+	stub.mspID = OrgServicioSocial
+	stub.txID = "TX-SS-INICIO"
+
+	if err := contract.IniciarServicioSocial(
+		ctx,
+		"EXP-006",
+	); err != nil {
+		t.Fatalf(
+			"IniciarServicioSocial() error = %v",
+			err,
+		)
+	}
+
+	// SS_EN_CURSO → SS_LIBERADO
+	stub.txID = "TX-SS-LIBERADO"
+
+	if err := contract.LiberarServicioSocial(
+		ctx,
+		"EXP-006",
+	); err != nil {
+		t.Fatalf(
+			"LiberarServicioSocial() error = %v",
+			err,
+		)
+	}
+
+	// Intentar rectificar ACTIVO → CERTIFICADO.
+	// La transición tiene operaciones posteriores, por lo que
+	// debe ser rechazada.
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-RECTIFICACION"
+
+	err := contract.RectificarTransicion(
+		ctx,
+		"EXP-006",
+		"TX-CERTIFICADO",
+	)
+
+	if err != ErrTransicionNoRectificable {
+		t.Fatalf(
+			"error = %v, se esperaba ErrTransicionNoRectificable",
+			err,
+		)
+	}
+
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-006",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	// El estado debe permanecer en SS_LIBERADO.
+	if expediente.EstadoActual != EstadoSSLiberado {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoSSLiberado,
+		)
+	}
+
+	// No debe haberse agregado una rectificación.
+	if len(expediente.HistorialTransiciones) != 6 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 6",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+}
+
+func TestRectificarUltimaTransicionRama(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-007",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-007",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	stub.txID = "TX-ACTIVO"
+
+	if err := contract.ConfirmarActivo(
+		ctx,
+		"EXP-007",
+	); err != nil {
+		t.Fatalf("ConfirmarActivo() error = %v", err)
+	}
+
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-CERTIFICADO"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-007",
+	); err != nil {
+		t.Fatalf("EmitirCertificado() error = %v", err)
+	}
+
+	stub.mspID = OrgServicioSocial
+	stub.txID = "TX-SS-INICIO"
+
+	if err := contract.IniciarServicioSocial(
+		ctx,
+		"EXP-007",
+	); err != nil {
+		t.Fatalf(
+			"IniciarServicioSocial() error = %v",
+			err,
+		)
+	}
+
+	stub.txID = "TX-SS-LIBERADO"
+
+	if err := contract.LiberarServicioSocial(
+		ctx,
+		"EXP-007",
+	); err != nil {
+		t.Fatalf(
+			"LiberarServicioSocial() error = %v",
+			err,
+		)
+	}
+
+	// Rectificar la última transición efectiva.
+	stub.txID = "TX-RECTIFICACION"
+
+	err := contract.RectificarTransicion(
+		ctx,
+		"EXP-007",
+		"TX-SS-LIBERADO",
+	)
+
+	if err != nil {
+		t.Fatalf(
+			"RectificarTransicion() error = %v",
+			err,
+		)
+	}
+
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-007",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoSSCurso {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoSSCurso,
+		)
+	}
+
+	// Se esperan las seis transiciones originales más
+	// la nueva rectificación.
+	if len(expediente.HistorialTransiciones) != 7 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 7",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+
+	var rectificacion *HashEvidencia
+
+	for _, evidencia := range expediente.HistorialTransiciones {
+		if evidencia.Tipo == "RECTIFICACION" &&
+			evidencia.TxID == "TX-RECTIFICACION" {
+			rectificacion = evidencia
+			break
+		}
+	}
+
+	if rectificacion == nil {
+		t.Fatal(
+			"no se encontró la rectificación",
+		)
+	}
+
+	if rectificacion.TxIDTransicionOrigen != "TX-SS-LIBERADO" {
+		t.Fatalf(
+			"TxIDTransicionOrigen = %s, se esperaba TX-SS-LIBERADO",
+			rectificacion.TxIDTransicionOrigen,
+		)
+	}
+
+	if rectificacion.EstadoAnterior != EstadoSSLiberado {
+		t.Fatalf(
+			"EstadoAnterior = %s, se esperaba %s",
+			rectificacion.EstadoAnterior,
+			EstadoSSLiberado,
+		)
+	}
+
+	if rectificacion.EstadoNuevo != EstadoSSCurso {
+		t.Fatalf(
+			"EstadoNuevo = %s, se esperaba %s",
+			rectificacion.EstadoNuevo,
+			EstadoSSCurso,
+		)
+	}
+}
+
+func TestContinuarFlujoDespuesDeRectificacion(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-008",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-008",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	stub.txID = "TX-ACTIVO"
+
+	if err := contract.ConfirmarActivo(
+		ctx,
+		"EXP-008",
+	); err != nil {
+		t.Fatalf("ConfirmarActivo() error = %v", err)
+	}
+
+	// ACTIVO → CERTIFICADO
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-CERTIFICADO"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-008",
+	); err != nil {
+		t.Fatalf(
+			"EmitirCertificado() error = %v",
+			err,
+		)
+	}
+
+	// CERTIFICADO → ACTIVO mediante rectificación.
+	stub.txID = "TX-RECTIFICACION"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-008",
+		"TX-CERTIFICADO",
+	); err != nil {
+		t.Fatalf(
+			"RectificarTransicion() error = %v",
+			err,
+		)
+	}
+
+	// Después de la rectificación, el expediente debe
+	// encontrarse nuevamente en ACTIVO.
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-008",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoActivo {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoActivo,
+		)
+	}
+
+	// El flujo debe poder continuar por la otra rama.
+	stub.mspID = OrgServicioSocial
+	stub.txID = "TX-SS-INICIO"
+
+	if err := contract.IniciarServicioSocial(
+		ctx,
+		"EXP-008",
+	); err != nil {
+		t.Fatalf(
+			"IniciarServicioSocial() después de rectificación error = %v",
+			err,
+		)
+	}
+
+	expediente, err = contract.ConsultarExpediente(
+		ctx,
+		"EXP-008",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() después de continuar error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoSSCurso {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoSSCurso,
+		)
+	}
+}
+
+func TestReejecutarTransicionDespuesDeRectificacion(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-009",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-009",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	stub.txID = "TX-ACTIVO"
+
+	if err := contract.ConfirmarActivo(
+		ctx,
+		"EXP-009",
+	); err != nil {
+		t.Fatalf("ConfirmarActivo() error = %v", err)
+	}
+
+	// Primera ejecución: ACTIVO → CERTIFICADO.
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-CERTIFICADO-1"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-009",
+	); err != nil {
+		t.Fatalf(
+			"primera EmitirCertificado() error = %v",
+			err,
+		)
+	}
+
+	// Rectificar la primera ejecución.
+	stub.txID = "TX-RECTIFICACION"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-009",
+		"TX-CERTIFICADO-1",
+	); err != nil {
+		t.Fatalf(
+			"RectificarTransicion() error = %v",
+			err,
+		)
+	}
+
+	// El expediente debe regresar a ACTIVO.
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-009",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoActivo {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoActivo,
+		)
+	}
+
+	// Segunda ejecución de la misma operación.
+	// Debe ser permitida porque la primera transición
+	// ya fue rectificada.
+	stub.txID = "TX-CERTIFICADO-2"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-009",
+	); err != nil {
+		t.Fatalf(
+			"segunda EmitirCertificado() después de rectificación error = %v",
+			err,
+		)
+	}
+
+	expediente, err = contract.ConsultarExpediente(
+		ctx,
+		"EXP-009",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() final error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoCertificado {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoCertificado,
+		)
+	}
+
+	// Deben existir:
+	// 3 transiciones iniciales
+	// + certificado 1
+	// + rectificación
+	// + certificado 2
+	if len(expediente.HistorialTransiciones) != 6 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 6",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+}
+
+func TestNoPuedeRectificarseUnaRectificacion(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-010",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-010",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	// Rectificar la transición de validación.
+	stub.txID = "TX-RECTIFICACION"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-010",
+		"TX-VALIDACION",
+	); err != nil {
+		t.Fatalf(
+			"RectificarTransicion() error = %v",
+			err,
+		)
+	}
+
+	// Intentar rectificar la propia rectificación.
+	stub.txID = "TX-RECTIFICACION-2"
+
+	err := contract.RectificarTransicion(
+		ctx,
+		"EXP-010",
+		"TX-RECTIFICACION",
+	)
+
+	if err != ErrTransicionNoExiste {
+		t.Fatalf(
+			"error = %v, se esperaba ErrTransicionNoExiste",
+			err,
+		)
+	}
+
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-010",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoInscrito {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoInscrito,
+		)
+	}
+
+	if len(expediente.HistorialTransiciones) != 3 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 3",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+}
+
+func TestRectificarTitulacionDesdeCertificado(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	stub.txID = "TX-ACTIVO"
+
+	if err := contract.ConfirmarActivo(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf("ConfirmarActivo() error = %v", err)
+	}
+
+	// ACTIVO → CERTIFICADO
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-CERTIFICADO"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf("EmitirCertificado() error = %v", err)
+	}
+
+	// CERTIFICADO → SS_EN_CURSO
+	stub.mspID = OrgServicioSocial
+	stub.txID = "TX-SS-INICIO"
+
+	if err := contract.IniciarServicioSocial(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf(
+			"IniciarServicioSocial() error = %v",
+			err,
+		)
+	}
+
+	// SS_EN_CURSO → SS_LIBERADO
+	stub.txID = "TX-SS-LIBERADO"
+
+	if err := contract.LiberarServicioSocial(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf(
+			"LiberarServicioSocial() error = %v",
+			err,
+		)
+	}
+
+	// SS_LIBERADO → TITULADO
+	stub.mspID = OrgTitulacion
+	stub.txID = "TX-TITULO"
+
+	if err := contract.EmitirTitulo(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf(
+			"EmitirTitulo() error = %v",
+			err,
+		)
+	}
+
+	// TITULADO → SS_LIBERADO mediante rectificación.
+	stub.txID = "TX-RECTIFICACION-TITULO"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-011",
+		"TX-TITULO",
+	); err != nil {
+		t.Fatalf(
+			"RectificarTransicion() error = %v",
+			err,
+		)
+	}
+
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-011",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoSSLiberado {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoSSLiberado,
+		)
+	}
+
+	if len(expediente.HistorialTransiciones) != 8 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 8",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+
+	var rectificacion *HashEvidencia
+
+	for _, evidencia := range expediente.HistorialTransiciones {
+		if evidencia.Tipo == "RECTIFICACION" &&
+			evidencia.TxID == "TX-RECTIFICACION-TITULO" {
+			rectificacion = evidencia
+			break
+		}
+	}
+
+	if rectificacion == nil {
+		t.Fatal("no se encontró la rectificación de titulación")
+	}
+
+	if rectificacion.TxIDTransicionOrigen != "TX-TITULO" {
+		t.Fatalf(
+			"TxIDTransicionOrigen = %s, se esperaba TX-TITULO",
+			rectificacion.TxIDTransicionOrigen,
+		)
+	}
+
+	if rectificacion.EstadoAnterior != EstadoTitulado {
+		t.Fatalf(
+			"EstadoAnterior = %s, se esperaba %s",
+			rectificacion.EstadoAnterior,
+			EstadoTitulado,
+		)
+	}
+
+	if rectificacion.EstadoNuevo != EstadoSSLiberado {
+		t.Fatalf(
+			"EstadoNuevo = %s, se esperaba %s",
+			rectificacion.EstadoNuevo,
+			EstadoSSLiberado,
+		)
+	}
+}
+
+func TestRectificarTitulacionDesdeServicioSocial(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	stub.txID = "TX-ACTIVO"
+
+	if err := contract.ConfirmarActivo(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf("ConfirmarActivo() error = %v", err)
+	}
+
+	// ACTIVO → SS_EN_CURSO
+	stub.mspID = OrgServicioSocial
+	stub.txID = "TX-SS-INICIO"
+
+	if err := contract.IniciarServicioSocial(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf(
+			"IniciarServicioSocial() error = %v",
+			err,
+		)
+	}
+
+	// SS_EN_CURSO → SS_LIBERADO
+	stub.txID = "TX-SS-LIBERADO"
+
+	if err := contract.LiberarServicioSocial(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf(
+			"LiberarServicioSocial() error = %v",
+			err,
+		)
+	}
+
+	// SS_LIBERADO → CERTIFICADO
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-CERTIFICADO"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf(
+			"EmitirCertificado() error = %v",
+			err,
+		)
+	}
+
+	// CERTIFICADO → TITULADO
+	stub.mspID = OrgTitulacion
+	stub.txID = "TX-TITULO"
+
+	if err := contract.EmitirTitulo(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf(
+			"EmitirTitulo() error = %v",
+			err,
+		)
+	}
+
+	// TITULADO → CERTIFICADO mediante rectificación.
+	stub.txID = "TX-RECTIFICACION-TITULO"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-012",
+		"TX-TITULO",
+	); err != nil {
+		t.Fatalf(
+			"RectificarTransicion() error = %v",
+			err,
+		)
+	}
+
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-012",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoCertificado {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoCertificado,
+		)
+	}
+
+	// Cinco transiciones previas + titulación + rectificación.
+	if len(expediente.HistorialTransiciones) != 8 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 8",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+
+	var rectificacion *HashEvidencia
+
+	for _, evidencia := range expediente.HistorialTransiciones {
+		if evidencia.Tipo == "RECTIFICACION" &&
+			evidencia.TxID == "TX-RECTIFICACION-TITULO" {
+			rectificacion = evidencia
+			break
+		}
+	}
+
+	if rectificacion == nil {
+		t.Fatal("no se encontró la rectificación de titulación")
+	}
+
+	if rectificacion.TxIDTransicionOrigen != "TX-TITULO" {
+		t.Fatalf(
+			"TxIDTransicionOrigen = %s, se esperaba TX-TITULO",
+			rectificacion.TxIDTransicionOrigen,
+		)
+	}
+
+	if rectificacion.EstadoAnterior != EstadoTitulado {
+		t.Fatalf(
+			"EstadoAnterior = %s, se esperaba %s",
+			rectificacion.EstadoAnterior,
+			EstadoTitulado,
+		)
+	}
+
+	if rectificacion.EstadoNuevo != EstadoCertificado {
+		t.Fatalf(
+			"EstadoNuevo = %s, se esperaba %s",
+			rectificacion.EstadoNuevo,
+			EstadoCertificado,
+		)
+	}
+}
+
+func TestRectificarTransicionReejecutada(t *testing.T) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	stub.txID = "TX-ACTIVO"
+
+	if err := contract.ConfirmarActivo(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf("ConfirmarActivo() error = %v", err)
+	}
+
+	// Primera ejecución: ACTIVO → CERTIFICADO.
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-CERTIFICADO-1"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf("primera EmitirCertificado() error = %v", err)
+	}
+
+	// Rectificar la primera transición.
+	stub.txID = "TX-RECTIFICACION-1"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-011",
+		"TX-CERTIFICADO-1",
+	); err != nil {
+		t.Fatalf("primera RectificarTransicion() error = %v", err)
+	}
+
+	// Segunda ejecución: ACTIVO → CERTIFICADO.
+	stub.txID = "TX-CERTIFICADO-2"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-011",
+	); err != nil {
+		t.Fatalf(
+			"segunda EmitirCertificado() después de rectificación error = %v",
+			err,
+		)
+	}
+
+	// Rectificar la segunda transición.
+	stub.txID = "TX-RECTIFICACION-2"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-011",
+		"TX-CERTIFICADO-2",
+	); err != nil {
+		t.Fatalf(
+			"segunda RectificarTransicion() error = %v",
+			err,
+		)
+	}
+
+	// El expediente debe regresar nuevamente a ACTIVO.
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-011",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoActivo {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoActivo,
+		)
+	}
+
+	// Deben existir:
+	// 3 transiciones iniciales
+	// + certificado 1
+	// + rectificación 1
+	// + certificado 2
+	// + rectificación 2
+	if len(expediente.HistorialTransiciones) != 7 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 7",
+			len(expediente.HistorialTransiciones),
+		)
+	}
+}
+
+func TestNoPuedeRectificarTransicionAnterior(
+	t *testing.T,
+) {
+	contract := new(SmartContract)
+
+	stub := newTestStub(OrgRegistro)
+	ctx := newTestContext(stub)
+
+	stub.txID = "TX-INSCRIPCION"
+
+	if err := contract.RegistrarInscripcion(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf("RegistrarInscripcion() error = %v", err)
+	}
+
+	stub.txID = "TX-VALIDACION"
+
+	if err := contract.ValidarDocumentos(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf("ValidarDocumentos() error = %v", err)
+	}
+
+	stub.txID = "TX-ACTIVO"
+
+	if err := contract.ConfirmarActivo(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf("ConfirmarActivo() error = %v", err)
+	}
+
+	// T1: ACTIVO → CERTIFICADO.
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-CERTIFICADO"
+
+	if err := contract.EmitirCertificado(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf("EmitirCertificado() error = %v", err)
+	}
+
+	// T2: CERTIFICADO → SS_EN_CURSO.
+	stub.mspID = OrgServicioSocial
+	stub.txID = "TX-SS-INICIO"
+
+	if err := contract.IniciarServicioSocial(
+		ctx,
+		"EXP-012",
+	); err != nil {
+		t.Fatalf("IniciarServicioSocial() error = %v", err)
+	}
+
+	// Rectificar T2.
+	stub.txID = "TX-RECTIFICACION-SS"
+
+	if err := contract.RectificarTransicion(
+		ctx,
+		"EXP-012",
+		"TX-SS-INICIO",
+	); err != nil {
+		t.Fatalf(
+			"RectificarTransicion() de T2 error = %v",
+			err,
+		)
+	}
+
+	// El expediente debe regresar a CERTIFICADO.
+	expediente, err := contract.ConsultarExpediente(
+		ctx,
+		"EXP-012",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoCertificado {
+		t.Fatalf(
+			"EstadoActual = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoCertificado,
+		)
+	}
+
+	// Intentar rectificar T1, que ya no es la última
+	// transición efectiva.
+	stub.mspID = OrgCertificacion
+	stub.txID = "TX-RECTIFICACION-CERTIFICADO"
+
+	err = contract.RectificarTransicion(
+		ctx,
+		"EXP-012",
+		"TX-CERTIFICADO",
+	)
+
+	if err != ErrTransicionNoRectificable {
+		t.Fatalf(
+			"RectificarTransicion() error = %v, se esperaba %v",
+			err,
+			ErrTransicionNoRectificable,
+		)
+	}
+
+	// El estado no debe modificarse.
+	expediente, err = contract.ConsultarExpediente(
+		ctx,
+		"EXP-012",
+	)
+	if err != nil {
+		t.Fatalf(
+			"ConsultarExpediente() final error = %v",
+			err,
+		)
+	}
+
+	if expediente.EstadoActual != EstadoCertificado {
+		t.Fatalf(
+			"EstadoActual final = %s, se esperaba %s",
+			expediente.EstadoActual,
+			EstadoCertificado,
+		)
+	}
+
+	// Deben existir únicamente:
+	// 3 transiciones iniciales
+	// + certificado
+	// + servicio social
+	// + rectificación del servicio social
+	if len(expediente.HistorialTransiciones) != 6 {
+		t.Fatalf(
+			"número de entradas = %d, se esperaban 6",
+			len(expediente.HistorialTransiciones),
 		)
 	}
 }

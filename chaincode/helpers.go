@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -121,25 +123,125 @@ func obtenerTimestamp(
 	return t.Format(time.RFC3339), nil
 }
 
+// generarHashEvidencia genera el SHA-256 de una operación
+// mediante su representación canónica.
+func generarHashEvidencia(
+	id string,
+	estadoAnterior string,
+	evento string,
+	estadoNuevo string,
+	emisor string,
+	timestamp string,
+) string {
+
+	datos := id + "|" +
+		estadoAnterior + "|" +
+		evento + "|" +
+		estadoNuevo + "|" +
+		emisor + "|" +
+		timestamp
+
+	hash := sha256.Sum256([]byte(datos))
+
+	return hex.EncodeToString(hash[:])
+}
+
 // agregarEvidencia registra una nueva evidencia criptográfica
-// dentro del expediente.
+// asociada a una transición administrativa.
 func agregarEvidencia(
 	expediente *Expediente,
-	nombre string,
-	hash string,
-	txID string,
-	timestamp string,
+	estadoAnterior string,
+	evento string,
+	estadoNuevo string,
 	emisor string,
+	timestamp string,
+	txID string,
 ) {
 
-	if expediente.Evidencias == nil {
-		expediente.Evidencias = make(map[string]*HashEvidencia)
+	// Representación canónica de la operación.
+	hashHex := generarHashEvidencia(
+		expediente.ID,
+		estadoAnterior,
+		evento,
+		estadoNuevo,
+		emisor,
+		timestamp,
+	)
+
+	evidencia := &HashEvidencia{
+		Hash:           hashHex,
+		EstadoAnterior: estadoAnterior,
+		EstadoNuevo:    estadoNuevo,
+		Evento:         evento,
+		Timestamp:      timestamp,
+		Emisor:         emisor,
+		TxID:           txID,
+		Tipo:           "TRANSICION",
 	}
 
-	expediente.Evidencias[nombre] = &HashEvidencia{
-		Hash:      hash,
-		Timestamp: timestamp,
-		Emisor:    emisor,
-		TxID:      txID,
+	// Agregar la evidencia al final del historial.
+	expediente.HistorialTransiciones = append(
+		expediente.HistorialTransiciones,
+		evidencia,
+	)
+}
+
+// obtenerUltimaTransicion devuelve la última transición registrada
+// en el historial del expediente.
+func obtenerUltimaTransicion(
+	expediente *Expediente,
+) *HashEvidencia {
+
+	if len(expediente.HistorialTransiciones) == 0 {
+		return nil
 	}
+
+	return expediente.HistorialTransiciones[len(expediente.HistorialTransiciones)-1]
+}
+
+// buscarTransicionPorTxID busca una transición específica
+// mediante su identificador de transacción.
+func buscarTransicionPorTxID(
+	expediente *Expediente,
+	txID string,
+) *HashEvidencia {
+
+	for _, transicion := range expediente.HistorialTransiciones {
+		if transicion.Tipo == "TRANSICION" &&
+			transicion.TxID == txID {
+			return transicion
+		}
+	}
+
+	return nil
+}
+
+func existeTransicionVigente(
+	expediente *Expediente,
+	evento string,
+) bool {
+
+	for _, transicion := range expediente.HistorialTransiciones {
+
+		if transicion.Tipo != "TRANSICION" ||
+			transicion.Evento != evento {
+			continue
+		}
+
+		rectificada := false
+
+		for _, operacion := range expediente.HistorialTransiciones {
+			if operacion.Tipo == "RECTIFICACION" &&
+				operacion.TxIDTransicionOrigen == transicion.TxID {
+				rectificada = true
+				break
+			}
+		}
+
+		if !rectificada {
+			return true
+		}
+	}
+
+	return false
 }
