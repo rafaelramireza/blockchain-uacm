@@ -4,7 +4,7 @@ import "errors"
 
 var (
 	// Errores de validación
-	ErrIDVacio   = errors.New("el identificador del expediente es obligatorio")
+	ErrIDVacio = errors.New("el identificador del expediente es obligatorio")
 
 	// Errores de negocio
 	ErrExpedienteNoExiste = errors.New("el expediente no existe")
