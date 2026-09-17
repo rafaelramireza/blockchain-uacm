@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/rectificacion-medec
 
   pull_request:
     branches:
