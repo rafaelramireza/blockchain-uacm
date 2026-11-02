@@ -53,6 +53,36 @@ TIT_PEER="peer0.titulacion.uacm.edu.mx:10051"
 TIT_TLS="$NETWORK_DIR/organizations/peerOrganizations/titulacion.uacm.edu.mx/peers/peer0.titulacion.uacm.edu.mx/tls/ca.crt"
 
 # ============================================================
+# PERFILES DE LAS CUATRO ORGANIZACIONES
+# Compatibilidad con los scripts de evaluación
+# ============================================================
+
+declare -A PERFIL_MSP
+declare -A PERFIL_MSP_PATH
+declare -A PERFIL_PEER
+declare -A PERFIL_TLS
+
+PERFIL_MSP[REGISTRO]="$REGISTRO_MSP"
+PERFIL_MSP_PATH[REGISTRO]="$REGISTRO_MSP_PATH"
+PERFIL_PEER[REGISTRO]="$REGISTRO_PEER"
+PERFIL_TLS[REGISTRO]="$REGISTRO_TLS"
+
+PERFIL_MSP[SS]="$SS_MSP"
+PERFIL_MSP_PATH[SS]="$SS_MSP_PATH"
+PERFIL_PEER[SS]="$SS_PEER"
+PERFIL_TLS[SS]="$SS_TLS"
+
+PERFIL_MSP[CERT]="$CERT_MSP"
+PERFIL_MSP_PATH[CERT]="$CERT_MSP_PATH"
+PERFIL_PEER[CERT]="$CERT_PEER"
+PERFIL_TLS[CERT]="$CERT_TLS"
+
+PERFIL_MSP[TIT]="$TIT_MSP"
+PERFIL_MSP_PATH[TIT]="$TIT_MSP_PATH"
+PERFIL_PEER[TIT]="$TIT_PEER"
+PERFIL_TLS[TIT]="$TIT_TLS"
+
+# ============================================================
 # SELECCIONAR IDENTIDAD FABRIC
 # ============================================================
 
@@ -73,6 +103,8 @@ usar_identidad() {
 # ============================================================
 
 invocar() {
+    # Conserva la identidad seleccionada por quien llama a esta función.
+
     local funcion="$1"
     shift
 
@@ -108,6 +140,12 @@ invocar() {
 
 consultar() {
     local id="$1"
+
+    usar_identidad \
+        "$REGISTRO_MSP" \
+        "$REGISTRO_MSP_PATH" \
+        "$REGISTRO_PEER" \
+        "$REGISTRO_TLS"
 
     peer chaincode query \
         -C "$CHANNEL_NAME" \
@@ -159,4 +197,38 @@ verificar_estado() {
     echo "      Estado actual: $actual"
 
     [[ "$actual" == "$esperado" ]]
+}
+
+# ============================================================
+# VERIFICAR SI EXISTE UN EXPEDIENTE
+# Retorno:
+#   0 = existe
+#   1 = no existe
+#   2 = error de consulta no reconocido
+# ============================================================
+
+existe_expediente() {
+    local id="$1"
+    local salida
+    local rc
+
+    salida="$(consultar "$id" 2>&1)"
+    rc=$?
+
+    if [[ "$rc" -eq 0 ]]; then
+        if printf '%s\n' "$salida" | jq -e 'type == "object"' >/dev/null 2>&1; then
+            return 0
+        fi
+
+        echo "ERROR: la consulta de $id no devolvió un objeto JSON válido." >&2
+        return 2
+    fi
+
+    if printf '%s\n' "$salida" |
+        grep -Fq "el expediente $id no existe"; then
+        return 1
+    fi
+
+    echo "ERROR al consultar $id: $salida" >&2
+    return 2
 }

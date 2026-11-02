@@ -1,169 +1,142 @@
+
 #!/usr/bin/env bash
 
 set -euo pipefail
-export FABRIC_CFG_PATH="$HOME/hyperledger/fabric-samples/config"
 
 # ============================================================
 # CONSULTAR EXPEDIENTES POR ESTADO
 #
-# Consulta todos los expedientes cuyo estadoActual coincide
-# con el estado proporcionado.
-#
-# Esta operación es únicamente de consulta.
-# No modifica el World State.
+# Consulta CouchDB directamente en modo de solo lectura.
+# No modifica el chaincode ni el World State.
 #
 # Uso:
 #   ./consultar_expedientes_estado.sh ESTADO
-#
-# Ejemplos:
-#   ./consultar_expedientes_estado.sh INSCRITO
-#   ./consultar_expedientes_estado.sh DOC_VALIDADO
-#   ./consultar_expedientes_estado.sh ACTIVO
-#   ./consultar_expedientes_estado.sh CERTIFICADO
-#   ./consultar_expedientes_estado.sh SS_EN_CURSO
-#   ./consultar_expedientes_estado.sh SS_LIBERADO
-#   ./consultar_expedientes_estado.sh TITULADO
-#
 # ============================================================
 
-
-# ------------------------------------------------------------
-# Validar argumentos
-# ------------------------------------------------------------
+ESTADOS_VALIDOS=(
+    INSCRITO
+    DOC_VALIDADO
+    ACTIVO
+    CERTIFICADO
+    SS_EN_CURSO
+    SS_LIBERADO
+    TITULADO
+)
 
 if [[ $# -ne 1 ]]; then
     echo "Uso: $0 ESTADO"
-    echo
-    echo "Estados válidos:"
-    echo "  INSCRITO"
-    echo "  DOC_VALIDADO"
-    echo "  ACTIVO"
-    echo "  CERTIFICADO"
-    echo "  SS_EN_CURSO"
-    echo "  SS_LIBERADO"
-    echo "  TITULADO"
+    printf 'Estados válidos:\n'
+    printf '  %s\n' "${ESTADOS_VALIDOS[@]}"
     exit 1
 fi
 
 ESTADO="$1"
+VALIDO=false
 
+for estado_valido in "${ESTADOS_VALIDOS[@]}"; do
+    if [[ "$ESTADO" == "$estado_valido" ]]; then
+        VALIDO=true
+        break
+    fi
+done
 
-# ------------------------------------------------------------
-# Validar estado
-# ------------------------------------------------------------
+if [[ "$VALIDO" != true ]]; then
+    echo "ERROR: estado no válido: $ESTADO"
+    printf 'Estados válidos:\n'
+    printf '  %s\n' "${ESTADOS_VALIDOS[@]}"
+    exit 1
+fi
 
-case "$ESTADO" in
+# Configuración de CouchDB según compose-test-net.yaml.
+CONTENEDOR="couchdb.registroescolar"
+BASE_DATOS="uacmchannel_uacm"
 
-    INSCRITO|DOC_VALIDADO|ACTIVO|CERTIFICADO|SS_EN_CURSO|SS_LIBERADO|TITULADO)
-        ;;
-
-    *)
-        echo "ERROR: estado no válido: $ESTADO"
-        echo
-        echo "Estados válidos:"
-        echo "  INSCRITO"
-        echo "  DOC_VALIDADO"
-        echo "  ACTIVO"
-        echo "  CERTIFICADO"
-        echo "  SS_EN_CURSO"
-        echo "  SS_LIBERADO"
-        echo "  TITULADO"
-        exit 1
-        ;;
-
-esac
-
-
-# ------------------------------------------------------------
-# Rutas de Hyperledger Fabric
-# ------------------------------------------------------------
-
-TEST_NETWORK="$HOME/hyperledger/fabric-samples/test-network-4org"
-
-CHAINCODE_NAME="uacm"
-CHANNEL_NAME="uacmchannel"
-
-
-# ------------------------------------------------------------
-# Organización: Registro Escolar
-# ------------------------------------------------------------
-
-REGISTRO_MSP="RegistroEscolarMSP"
-
-REGISTRO_MSP_PATH="$TEST_NETWORK/organizations/peerOrganizations/registroescolar.uacm.edu.mx/users/Admin@registroescolar.uacm.edu.mx/msp"
-
-REGISTRO_PEER="peer0.registroescolar.uacm.edu.mx:7051"
-
-REGISTRO_TLS="$TEST_NETWORK/organizations/peerOrganizations/registroescolar.uacm.edu.mx/peers/peer0.registroescolar.uacm.edu.mx/tls/ca.crt"
-
-
-# ============================================================
-# CONFIGURAR IDENTIDAD
-# ============================================================
-
-export CORE_PEER_LOCALMSPID="$REGISTRO_MSP"
-export CORE_PEER_MSPCONFIGPATH="$REGISTRO_MSP_PATH"
-export CORE_PEER_ADDRESS="$REGISTRO_PEER"
-export CORE_PEER_TLS_ENABLED=true
-export CORE_PEER_TLS_ROOTCERT_FILE="$REGISTRO_TLS"
-
-unset CORE_PEER_TLS_SERVERHOSTOVERRIDE
-
-
-# ============================================================
-# CONSULTA
-# ============================================================
+export COUCHDB_USER="${COUCHDB_USER:-admin}"
+export COUCHDB_PASSWORD="${COUCHDB_PASSWORD:-adminpw}"
 
 echo
 echo "============================================================"
 echo "EXPEDIENTES EN ESTADO: $ESTADO"
 echo "============================================================"
 echo
-echo "Consultando World State..."
+echo "Consultando CouchDB en modo de solo lectura..."
 echo
 
-RESPUESTA=$(peer chaincode query \
-    -C "$CHANNEL_NAME" \
-    -n "$CHAINCODE_NAME" \
-    -c "{\"function\":\"ConsultarExpedientesPorEstado\",\"Args\":[\"$ESTADO\"]}")
+# Construir el selector JSON sin interpolar directamente el estado.
+RESPUESTA=$(
+    jq -n --arg estado "$ESTADO" '{
+        selector: {
+            docType: "EXPEDIENTE",
+            estadoActual: $estado
+        },
+        fields: [
+            "_id",
+            "id",
+            "estadoActual",
+            "historialTransiciones"
+        ],
+        limit: 10000
+    }' |
+    docker exec -i \
+        -e COUCHDB_USER \
+        -e COUCHDB_PASSWORD \
+        "$CONTENEDOR" \
+        sh -c '
+            curl -fsS \
+                -u "$COUCHDB_USER:$COUCHDB_PASSWORD" \
+                -H "Content-Type: application/json" \
+                -X POST \
+                "http://localhost:5984/'"$BASE_DATOS"'/_find" \
+                -d @-
+        '
+)
 
-echo "$RESPUESTA" | jq -r '
-    "TOTAL DE EXPEDIENTES: \(length)",
+# Verificar que la respuesta tenga la estructura esperada.
+if ! jq -e '.docs | type == "array"' >/dev/null <<< "$RESPUESTA"; then
+    echo "ERROR: CouchDB no devolvió una lista válida de documentos."
+    exit 1
+fi
+
+# Mostrar el historial real de transiciones.
+# Un campo ausente o nulo se presenta como lista vacía,
+# únicamente para la salida; el documento no se modifica.
+jq -r '
+    "TOTAL DE EXPEDIENTES: \(.docs | length)",
     "",
-
-    to_entries[] as $entrada |
-    ($entrada.value) as $expediente |
-
-    "EXPEDIENTE \($entrada.key + 1)",
-    
-    "------------------------------------------------------------",
-    "Matrícula:      \($expediente.id)",
-    "Estado actual:  \($expediente.estadoActual)",
-    "",
-    "EVIDENCIAS",
-    "------------------------------------------------------------",
 
     (
-        [
-            "INSCRIPCION",
-            "VALIDACION_DOCUMENTAL",
-            "EGRESO_CONFIRMADO",
-            "CERTIFICADO_EMITIDO",
-            "SERVICIO_SOCIAL_INICIADO",
-            "SERVICIO_SOCIAL_LIBERADO",
-            "TITULACION_REGISTRADA"
-        ]
-        | .[] as $tipo
-        | select($expediente.evidencias[$tipo] != null)
-        | $expediente.evidencias[$tipo] as $evidencia
-        | "\($tipo | if . == "EGRESO_CONFIRMADO" then "ACTIVO_CONFIRMADO" else . end)",
-          "   Emisor:      \($evidencia.emisor)",
-          "   Timestamp:   \($evidencia.timestamp)",
-          "   Hash:        \($evidencia.hash)",
-          "   TX ID:       \($evidencia.txId)",
-          ""
-    ),
+        .docs[] as $expediente |
 
-    "============================================================",
-    ""
-'
+        "MATRÍCULA: \($expediente.id // "(sin identificador)")",
+        "Estado actual: \($expediente.estadoActual // "(sin estado)")",
+        "------------------------------------------------------------",
+        "HISTORIAL DE TRANSICIONES",
+
+        (
+            ($expediente.historialTransiciones // []) as $historial |
+
+            if ($historial | type) != "array" then
+                "   ERROR: el historial tiene un formato inesperado."
+            elif ($historial | length) == 0 then
+                "   No hay transiciones registradas."
+            else
+                (
+                    $historial | to_entries[] |
+
+                    "   Transición \(.key + 1)",
+                    "      Evento:       \(.value.evento // "(no disponible)")",
+                    "      Estado previo: \(.value.estadoAnterior // "(no disponible)")",
+                    "      Estado nuevo:  \(.value.estadoNuevo // "(no disponible)")",
+                    "      Emisor:        \(.value.emisor // "(no disponible)")",
+                    "      Timestamp:     \(.value.timestamp // "(no disponible)")",
+                    "      Hash:          \(.value.hash // "(no disponible)")",
+                    "      TX ID:         \(.value.txId // "(no disponible)")",
+                    ""
+                )
+            end
+        ),
+
+        "============================================================",
+        ""
+    )
+' <<< "$RESPUESTA"

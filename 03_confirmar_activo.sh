@@ -152,6 +152,13 @@ generar_hash() {
 
 invocar() {
 
+    # Configurar explícitamente la identidad que firma la invocación.
+    usar_identidad \
+        "$REGISTRO_MSP" \
+        "$REGISTRO_MSP_PATH" \
+        "$REGISTRO_PEER" \
+        "$REGISTRO_TLS"
+
     local funcion="$1"
     local hash="$2"
 
